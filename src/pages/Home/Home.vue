@@ -5,8 +5,8 @@
       <q-page class="column items-center">
         <section id="top-section">
           <div id="title" class="text-center">
-            <h1 id="logo-title" class="hebrew-big">Your Title</h1>
-            <h4 class="logo-subtitle q-mt-md">Your SubTitle</h4>
+            <h1 id="logo-title" class="hebrew-big">Landing Page</h1>
+            <!-- <h4 class="logo-subtitle q-mt-md">Your SubTitle</h4> -->
           </div>
         </section>
       </q-page>

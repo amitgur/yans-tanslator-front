@@ -6,12 +6,12 @@
         id="header-toolbar"
         :style="{
           height: `${headerHight}px`,
-          backgroundColor: '#fff',
+          backgroundColor: '#394053',
         }"
       >
         <q-btn
           flat
-          color="primary"
+          color="#fff"
           class="lt-md"
           round
           icon="menu"
@@ -22,7 +22,7 @@
           :key="index"
           flat
           @click="clickMenuItem(menuItem)"
-          class="q-mr-sm gt-sm english-small text-primary text-bold"
+          class="q-mr-sm gt-sm english-small text-white text-bold"
           ><span
             class="english-small"
             style="font-size: 20px; font-weight: 400"
