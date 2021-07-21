@@ -1,122 +1,113 @@
 <template>
   <q-layout view="lHh lpr lFf">
+    <q-scroll-observer @scroll="onTranslatorScroll" />
     <my-menu :menu-list="menuList" language="he" />
     <q-page-container>
       <q-page class="items-center">
-        <section id="top-section">
-          <h4
-            class="q-ml-xl q-mr-xl q-pl-xl q-pr-xl q-pt-none q-mt-xl q-pb-none q-mb-none"
+        <div class="q-mx-xl q-px-xl q-mt-lg">
+          <q-input
+            bottom-slots
+            v-model="searchText"
+            label="Search"
+            style="max-width: 400px"
           >
-            Translate Pages for ...
-          </h4>
-          <div class="q-ml-xl q-pl-xl q-mr-xl q-pr-xl q-mt-lg">
-            <div class="filters">
-              <q-card>
-                <q-tabs
-                  v-model="tab"
-                  class="text-grey"
-                  active-color="primary"
-                  indicator-color="primary"
-                  align="justify"
-                  keep-alive
-                >
-                  <q-tab
-                    name="jukebox"
-                    label="jukebox"
-                    @click="filter('jukebox')"
-                  />
-                  <q-tab name="site" label="site" @click="filter('site')" />
-                  <q-tab name="error" label="error" @click="filter('error')" />
-                  <q-tab
-                    name="phonegap"
-                    label="phonegap"
-                    @click="filter('phonegap')"
-                  />
-                  <q-tab
-                    name="recorder"
-                    label="recorder"
-                    @click="filter('recorder')"
-                  />
-                  <q-tab
-                    name="passport"
-                    label="passport"
-                    @click="filter('passport')"
-                  />
-                  <q-tab
-                    name="profile"
-                    label="profile"
-                    @click="filter('profile')"
-                  />
-                  <q-tab name="sign" label="sign" @click="filter('sign')" />
-                  <q-tab name="idm" label="idm" @click="filter('idm')" />
-                </q-tabs>
-              </q-card>
-              <q-input bottom-slots v-model="searchText" label="Search">
-                <template v-slot:append>
-                  <q-icon name="search" />
-                </template>
-              </q-input>
-            </div>
+            <template v-slot:append>
+              <q-icon name="search" />
+            </template>
+          </q-input>
 
-            <div class="q-pa-md">
-              <div class="row">
-                <div class="col-4">
-                  Source Language Text
-                </div>
-                <div class="col-6">
-                  Input
-                </div>
-                <div class="col" style="text-align: right">
-                  Details
-                </div>
-                <div class="col">
-                  Update Translation
-                </div>
+          <!-- tabs -->
+          <div>
+            <q-card>
+              <q-tabs
+                v-model="tab"
+                class="text-grey"
+                active-color="primary"
+                indicator-color="primary"
+                align="justify"
+                keep-alive
+              >
+                <q-tab
+                  v-for="page in bandpadLanguagePages"
+                  :key="page"
+                  :name="page"
+                  :label="page"
+                  @click="pageFilter(page)"
+                />
+              </q-tabs>
+            </q-card>
+          </div>
+
+          <!-- table header -->
+          <div class="q-px-md q-pt-xl q-pb-sm">
+            <div class="row text-bold">
+              <div class="col-4">Source Language Text</div>
+              <div class="col-6">Input</div>
+              <div class="col text-right q-pr-lg">Details</div>
+            </div>
+          </div>
+
+          <!-- table content -->
+          <div class="q-px-md">
+            <div
+              v-for="item in displayData"
+              :key="item.key"
+              class="row justify-center items-center q-py-md q-my-sm bg-blue-grey-1"
+              style="border-radius: 0.4em"
+            >
+              <div class="col-4 q-px-md">
+                {{ item.text }}
               </div>
-            </div>
-
-            <div class="q-pa-md">
-              <div v-for="item in displayData" :key="item.key" class="row">
-                <div class="col-4">
-                  {{ item.text }}
-                </div>
-                <div class="col-6">
-                  <q-input
-                    class="text-body1"
-                    v-model="item.translatedText.en"
-                    autogrow
-                  />
-                </div>
-                <div class="col" style="text-align: right">
-                  <q-btn round color="accent" icon="info">
-                    <q-popup-proxy>
-                      <q-banner>
-                        <template v-slot:avatar>
-                          <q-icon name="info" color="primary" />
-                        </template>
-                        <div class="text-h5">
-                          Description:
-                        </div>
-                        <hr color="lightgrey" size="0.5" />
-                        <div class="text-h6">
-                          {{ item.description ? item.description : "-" }}
-                        </div>
-                        <br />
-                        <div class="text-h6">
-                          Key:
-                          {{ item.key }}
-                        </div>
-                      </q-banner>
-                    </q-popup-proxy>
-                  </q-btn>
-                </div>
-                <div class="col" style="text-align: center">
-                  <q-btn color="white" text-color="black" label="Update" />
-                </div>
+              <div class="col-6">
+                <q-input
+                  outlined
+                  class="text-body1"
+                  v-model="item.translatedText.en"
+                  autogrow
+                  @change="storeChanges(item.key, item.translatedText.en)"
+                />
+              </div>
+              <div class="col text-right q-pr-lg">
+                <q-btn round color="accent" icon="info">
+                  <q-popup-proxy>
+                    <q-banner class="q-pa-lg">
+                      <template v-slot:avatar>
+                        <q-icon name="info" color="primary" />
+                      </template>
+                      <div class="text-h5">Description:</div>
+                      <hr color="lightgrey" size="0.5" />
+                      <div class="text-h6">
+                        {{ item.description ? item.description : "-" }}
+                      </div>
+                      <br />
+                      <div class="text-h6">
+                        Key:
+                        {{ item.key }}
+                      </div>
+                    </q-banner>
+                  </q-popup-proxy>
+                </q-btn>
               </div>
             </div>
           </div>
-        </section>
+          <q-btn
+            color="white"
+            text-color="black"
+            label="Update"
+            @click="updateTranslation"
+            :class="{
+              'text-subtitle1': true,
+              'q-px-md': true,
+              'q-py-xs': true,
+              'update-button': !scrollOn,
+              'update-button-scroll': scrollOn,
+            }"
+          >
+            <q-badge rounded color="red" floating>{{
+              changedDataSize
+            }}</q-badge>
+          </q-btn>
+        </div>
       </q-page>
     </q-page-container>
   </q-layout>
@@ -126,6 +117,7 @@
 import MyMenu from "components/MyMenu";
 import menuList from "pages/Translator/menuList";
 import myMixins from "src/mixins/myMixins";
+import bandpadLanguagePages from "pages/languagePages";
 
 export default {
   name: "Translator",
@@ -141,31 +133,54 @@ export default {
       displayData: [],
       translateText: "",
       searchText: "",
+      bandpadLanguagePages,
+      changedData: new Map(),
+      changedDataSize: 0,
     };
   },
+  methods: {
+    pageFilter(filterString) {
+      this.displayData = this.allData.filter((e) => e.page === filterString);
+    },
+    onTranslatorScroll(info) {
+      if (info.position > 50) {
+        this.scrollOn = true;
+      } else {
+        this.scrollOn = false;
+      }
+    },
+    storeChanges(key, changes) {
+      this.changedData.set(key, changes);
+      this.changedDataSize = this.changedData.size;
+    },
+    updateTranslation() {},
+  },
   async created() {
-    const firstTab = "jukebox";
+    const firstTab = "site";
     this.tab = firstTab;
     try {
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
-      this.filter(firstTab);
+      this.pageFilter(firstTab);
     } catch (err) {
       this.serverError(err);
     }
   },
-  methods: {
-    filter(filterString) {
-      this.displayData = this.allData.filter((e) => e.page == filterString);
-      console.log(this.displayData);
-    },
-  },
 };
 </script>
 
-<style lang="sass" scoped>
-.row > div
-  padding: 10px 15px
-  background: #fff
-  border-bottom: 1px solid rgba(86, 61, 124, 0.2)
+<style lang="scss" scoped>
+.update-button {
+  position: fixed;
+  top: 7em;
+  right: 2em;
+  transition: top 0.5s;
+}
+
+.update-button-scroll {
+  position: fixed;
+  top: 4em;
+  right: 2em;
+  transition: top 0.6s;
+}
 </style>
