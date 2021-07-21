@@ -27,7 +27,12 @@
                   <q-tab name="tagCategory" label="Tag Categories" />
                 </q-tabs>
               </q-card>
-              <q-input v-model="search" filled type="search" hint="Search">
+              <q-input
+                bottom-slots
+                v-model="text"
+                label="Search"
+                :dense="dense"
+              >
                 <template v-slot:append>
                   <q-icon name="search" />
                 </template>
@@ -111,8 +116,4 @@ export default {
   padding: 10px 15px
   background: #fff
   border-bottom: 1px solid rgba(86, 61, 124, 0.2)
-
-.filters
-  display: flex
-  justify-content: space-between
 </style>
