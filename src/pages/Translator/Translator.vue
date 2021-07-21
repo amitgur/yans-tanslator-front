@@ -147,7 +147,7 @@ export default {
     const firstTab = "jukebox";
     this.tab = firstTab;
     try {
-      const res = await this.$axios.get("/apiV1/get_translates");
+      const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
       this.filter(firstTab);
     } catch (err) {
