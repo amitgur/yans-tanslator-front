@@ -18,21 +18,40 @@
                   active-color="primary"
                   indicator-color="primary"
                   align="justify"
+                  keep-alive
                 >
-                  <q-tab name="global" label="Global" />
-                  <q-tab name="score" label="Score" />
-                  <q-tab name="game" label="Game" />
-                  <q-tab name="tour" label="Tour" />
-                  <q-tab name="tags" label="Tags" />
-                  <q-tab name="tagCategory" label="Tag Categories" />
+                  <q-tab
+                    name="jukebox"
+                    label="jukebox"
+                    @click="filter('jukebox')"
+                  />
+                  <q-tab name="site" label="site" @click="filter('site')" />
+                  <q-tab name="error" label="error" @click="filter('error')" />
+                  <q-tab
+                    name="phonegap"
+                    label="phonegap"
+                    @click="filter('phonegap')"
+                  />
+                  <q-tab
+                    name="recorder"
+                    label="recorder"
+                    @click="filter('recorder')"
+                  />
+                  <q-tab
+                    name="passport"
+                    label="passport"
+                    @click="filter('passport')"
+                  />
+                  <q-tab
+                    name="profile"
+                    label="profile"
+                    @click="filter('profile')"
+                  />
+                  <q-tab name="sign" label="sign" @click="filter('sign')" />
+                  <q-tab name="idm" label="idm" @click="filter('idm')" />
                 </q-tabs>
               </q-card>
-              <q-input
-                bottom-slots
-                v-model="text"
-                label="Search"
-                :dense="dense"
-              >
+              <q-input bottom-slots v-model="searchText" label="Search">
                 <template v-slot:append>
                   <q-icon name="search" />
                 </template>
@@ -41,16 +60,13 @@
 
             <div class="q-pa-md">
               <div class="row">
-                <div class="col-2">
-                  Source Language
-                </div>
-                <div class="col">
-                  Key
-                </div>
                 <div class="col-4">
+                  Source Language Text
+                </div>
+                <div class="col-6">
                   Input
                 </div>
-                <div class="col-3">
+                <div class="col" style="text-align: right">
                   Details
                 </div>
                 <div class="col">
@@ -60,23 +76,39 @@
             </div>
 
             <div class="q-pa-md">
-              <div class="row">
-                <div class="col-2">
-                  English
-                </div>
-                <div class="col">
-                  123456
-                </div>
+              <div v-for="item in displayData" :key="item.key" class="row">
                 <div class="col-4">
+                  {{ item.text }}
+                </div>
+                <div class="col-6">
                   <q-input
-                    v-model="text"
-                    label="Input"
-                    :dense="dense"
+                    class="text-body1"
+                    v-model="item.translatedText.en"
                     autogrow
                   />
                 </div>
-                <div class="col-3">
-                  Details
+                <div class="col" style="text-align: right">
+                  <q-btn round color="accent" icon="info">
+                    <q-popup-proxy>
+                      <q-banner>
+                        <template v-slot:avatar>
+                          <q-icon name="info" color="primary" />
+                        </template>
+                        <div class="text-h5">
+                          Description:
+                        </div>
+                        <hr color="lightgrey" size="0.5" />
+                        <div class="text-h6">
+                          {{ item.description ? item.description : "-" }}
+                        </div>
+                        <br />
+                        <div class="text-h6">
+                          Key:
+                          {{ item.key }}
+                        </div>
+                      </q-banner>
+                    </q-popup-proxy>
+                  </q-btn>
                 </div>
                 <div class="col" style="text-align: center">
                   <q-btn color="white" text-color="black" label="Update" />
@@ -93,9 +125,11 @@
 <script>
 import MyMenu from "components/MyMenu";
 import menuList from "pages/Translator/menuList";
+import myMixins from "src/mixins/myMixins";
 
 export default {
   name: "Translator",
+  mixins: [myMixins],
   components: { MyMenu },
   data() {
     return {
@@ -103,10 +137,28 @@ export default {
       left: false,
       menuList,
       tab: "",
+      allData: [],
+      displayData: [],
+      translateText: "",
+      searchText: "",
     };
   },
-  created() {
-    this.tab = "global";
+  async created() {
+    const firstTab = "jukebox";
+    this.tab = firstTab;
+    try {
+      const res = await this.$axios.get("/apiV1/get_translates");
+      this.allData = res.data;
+      this.filter(firstTab);
+    } catch (err) {
+      this.serverError(err);
+    }
+  },
+  methods: {
+    filter(filterString) {
+      this.displayData = this.allData.filter((e) => e.page == filterString);
+      console.log(this.displayData);
+    },
   },
 };
 </script>
