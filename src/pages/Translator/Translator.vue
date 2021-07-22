@@ -17,16 +17,13 @@
             </template>
           </q-input>
 
-          <!-- tabs -->
+          <!-- tabs -page selector -->
           <div>
             <q-card>
               <q-tabs
+                class="bg-primary text-white"
                 v-model="tab"
-                class="text-grey"
-                active-color="primary"
-                indicator-color="primary"
                 align="justify"
-                keep-alive
               >
                 <q-tab
                   name="jukebox"
@@ -67,11 +64,11 @@
 
           <!-- table header -->
           <div class="q-pa-md">
-            <div class="row">
-              <div class="col-4">Source Language Text</div>
-              <div class="col-6">Input</div>
+            <div class="row table-header">
+              <div class="col-4"><div>Source Language Text</div></div>
+              <div class="col-6"><span>Input</span></div>
               <div class="col" style="text-align: right">Details</div>
-              <div class="col">Update Translation</div>
+              <div class="col">Update</div>
             </div>
           </div>
 
@@ -82,31 +79,40 @@
               :key="item.key"
               class="row justify-center items-center q-py-md q-my-sm bg-blue-grey-1"
             >
+              <!-- source text -->
               <div class="col-4">
-                {{ item.text }}
+                <div class="q-px-lg q-py-md q-mx-md">
+                  <div class="text-italic">{{ item.text }}</div>
+                </div>
               </div>
               <div class="col-6">
                 <q-input
                   outlined
-                  class="text-body1"
+                  class="bg-white"
                   v-model="item.translatedText.en"
                   autogrow
-                />
+                >
+                  <template v-slot:append>
+                    <q-avatar>
+                      <q-icon name="las la-pen" />
+                    </q-avatar>
+                  </template>
+                </q-input>
               </div>
-              <div class="col" style="text-align: right">
-                <q-btn round color="accent" icon="info">
+              <div class="col-1" style="text-align: center">
+                <q-btn class="bg-white" label="details">
                   <q-popup-proxy>
                     <q-banner>
                       <template v-slot:avatar>
                         <q-icon name="info" color="primary" />
                       </template>
-                      <div class="text-h5">Description:</div>
+                      <div>Description:</div>
                       <hr color="lightgrey" size="0.5" />
-                      <div class="text-h6">
+                      <div>
                         {{ item.description ? item.description : "-" }}
                       </div>
                       <br />
-                      <div class="text-h6">
+                      <div>
                         Key:
                         {{ item.key }}
                       </div>
@@ -114,8 +120,8 @@
                   </q-popup-proxy>
                 </q-btn>
               </div>
-              <div class="col" style="text-align: center">
-                <q-btn color="white" text-color="black" label="Update" />
+              <div class="col-1" style="text-align: center">
+                <q-btn color="secondary" text-color="black" label="Update" />
               </div>
             </div>
           </div>
@@ -168,4 +174,20 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.table-header {
+  height: 80px;
+  div {
+    background-color: #cdd2c6;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: bold;
+    height: 100%;
+    padding: 0;
+    margin: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+</style>
