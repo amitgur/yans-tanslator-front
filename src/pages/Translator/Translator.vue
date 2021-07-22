@@ -1,10 +1,9 @@
 <template>
   <q-layout view="lHh lpr lFf">
+    <q-scroll-observer @scroll="onTranslatorScroll" />
     <my-menu :menu-list="menuList" language="he" />
     <q-page-container>
       <q-page class="items-center">
-        <!-- tab section -->
-
         <div class="q-mx-xl q-px-xl q-mt-lg">
           <q-input
             bottom-slots
@@ -26,38 +25,12 @@
                 align="justify"
               >
                 <q-tab
-                  name="jukebox"
-                  label="jukebox"
-                  @click="pageFilter('jukebox')"
+                  v-for="page in bandpadLanguagePages"
+                  :key="page"
+                  :name="page"
+                  :label="page"
+                  @click="pageFilter(page)"
                 />
-                <q-tab name="site" label="site" @click="pageFilter('site')" />
-                <q-tab
-                  name="error"
-                  label="error"
-                  @click="pageFilter('error')"
-                />
-                <q-tab
-                  name="phonegap"
-                  label="phonegap"
-                  @click="pageFilter('phonegap')"
-                />
-                <q-tab
-                  name="recorder"
-                  label="recorder"
-                  @click="pageFilter('recorder')"
-                />
-                <q-tab
-                  name="passport"
-                  label="passport"
-                  @click="pageFilter('passport')"
-                />
-                <q-tab
-                  name="profile"
-                  label="profile"
-                  @click="pageFilter('profile')"
-                />
-                <q-tab name="sign" label="sign" @click="pageFilter('sign')" />
-                <q-tab name="idm" label="idm" @click="pageFilter('idm')" />
               </q-tabs>
             </q-card>
           </div>
@@ -73,11 +46,12 @@
           </div>
 
           <!-- table content -->
-          <div class="q-pa-md">
+          <div class="q-px-md">
             <div
               v-for="item in displayData"
               :key="item.key"
               class="row justify-center items-center q-py-md q-my-sm bg-blue-grey-1"
+              style="border-radius: 0.4em"
             >
               <!-- source text -->
               <div class="col-4">
@@ -102,7 +76,7 @@
               <div class="col-1" style="text-align: center">
                 <q-btn class="bg-white" label="details">
                   <q-popup-proxy>
-                    <q-banner>
+                    <q-banner class="q-pa-lg">
                       <template v-slot:avatar>
                         <q-icon name="info" color="primary" />
                       </template>
@@ -125,6 +99,23 @@
               </div>
             </div>
           </div>
+          <q-btn
+            color="white"
+            text-color="black"
+            label="Update"
+            @click="updateTranslation"
+            :class="{
+              'text-subtitle1': true,
+              'q-px-md': true,
+              'q-py-xs': true,
+              'update-button': !scrollOn,
+              'update-button-scroll': scrollOn,
+            }"
+          >
+            <q-badge rounded color="red" floating>{{
+              changedDataSize
+            }}</q-badge>
+          </q-btn>
         </div>
       </q-page>
     </q-page-container>
@@ -152,16 +143,29 @@ export default {
       translateText: "",
       searchText: "",
       bandpadLanguagePages,
+      changedData: new Map(),
+      changedDataSize: 0,
     };
   },
   methods: {
     pageFilter(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
-      console.log(this.displayData);
     },
+    onTranslatorScroll(info) {
+      if (info.position > 50) {
+        this.scrollOn = true;
+      } else {
+        this.scrollOn = false;
+      }
+    },
+    storeChanges(key, changes) {
+      this.changedData.set(key, changes);
+      this.changedDataSize = this.changedData.size;
+    },
+    updateTranslation() {},
   },
   async created() {
-    const firstTab = "jukebox";
+    const firstTab = "site";
     this.tab = firstTab;
     try {
       const res = await this.$axios.get("/apiV1/get_translates");

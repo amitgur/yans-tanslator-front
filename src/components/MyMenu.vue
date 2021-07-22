@@ -159,7 +159,7 @@ export default {
 </script>
 <style lang="scss" scoped>
 #header-toolbar {
-  transition: height 0.8s;
+  transition: height 0.5s;
 }
 
 .menu-button-scroll {
@@ -168,7 +168,7 @@ export default {
   margin-left: auto;
   cursor: pointer;
   font-size: 12px;
-  transition: all 0.8s;
+  transition: all 0.5s;
 }
 
 .menu-button {
@@ -177,6 +177,6 @@ export default {
   margin-left: auto;
   font-size: 17px;
   cursor: pointer;
-  transition: all 0.8s;
+  transition: all 0.5s;
 }
 </style>
