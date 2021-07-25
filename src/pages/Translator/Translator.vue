@@ -16,16 +16,13 @@
             </template>
           </q-input>
 
-          <!-- tabs -->
+          <!-- tabs -page selector -->
           <div>
             <q-card>
               <q-tabs
+                class="bg-primary text-white"
                 v-model="tab"
-                class="text-grey"
-                active-color="primary"
-                indicator-color="primary"
                 align="justify"
-                keep-alive
               >
                 <q-tab
                   v-for="page in bandpadLanguagePages"
@@ -39,11 +36,12 @@
           </div>
 
           <!-- table header -->
-          <div class="q-px-md q-pt-xl q-pb-sm">
-            <div class="row text-bold">
-              <div class="col-4">Source Language Text</div>
-              <div class="col-6">Input</div>
-              <div class="col text-right q-pr-lg">Details</div>
+          <div class="q-pa-md">
+            <div class="row table-header">
+              <div class="col-4"><div>Source Language Text</div></div>
+              <div class="col-6"><span>Input</span></div>
+              <div class="col" style="text-align: right">Details</div>
+              <div class="col">Update</div>
             </div>
           </div>
 
@@ -55,39 +53,50 @@
               class="row justify-center items-center q-py-md q-my-sm bg-blue-grey-1"
               style="border-radius: 0.4em"
             >
-              <div class="col-4 q-px-md">
-                {{ item.text }}
+              <!-- source text -->
+              <div class="col-4">
+                <div class="q-px-lg q-py-md q-mx-md">
+                  <div class="text-italic">{{ item.text }}</div>
+                </div>
               </div>
               <div class="col-6">
                 <q-input
-                  class="text-body1"
-                  v-model="item.translatedText.en"
-                  autogrow
-                  @keydown="storeChanges(item.key, item.translatedText.en)"
-                  bg-color="white"
                   outlined
-                />
+                  class="bg-white"
+                  v-model="item.translatedText.en"
+                  @keydown="storeChanges(item.key, item.translatedText.en)"
+                  autogrow
+                >
+                  <template v-slot:append>
+                    <q-avatar>
+                      <q-icon name="las la-pen" />
+                    </q-avatar>
+                  </template>
+                </q-input>
               </div>
-              <div class="col text-right q-pr-lg">
-                <q-btn round color="accent" icon="info">
+              <div class="col-1" style="text-align: center">
+                <q-btn class="bg-white" label="details">
                   <q-popup-proxy>
                     <q-banner class="q-pa-lg">
                       <template v-slot:avatar>
                         <q-icon name="info" color="primary" />
                       </template>
-                      <div class="text-h5">Description:</div>
+                      <div>Description:</div>
                       <hr color="lightgrey" size="0.5" />
-                      <div class="text-h6">
+                      <div>
                         {{ item.description ? item.description : "-" }}
                       </div>
                       <br />
-                      <div class="text-h6">
+                      <div>
                         Key:
                         {{ item.key }}
                       </div>
                     </q-banner>
                   </q-popup-proxy>
                 </q-btn>
+              </div>
+              <div class="col-1" style="text-align: center">
+                <q-btn color="secondary" text-color="black" label="Update" />
               </div>
             </div>
           </div>
@@ -170,7 +179,7 @@ export default {
     const firstTab = "site";
     this.tab = firstTab;
     try {
-      const res = await this.$axios.get("/apiV1/get_translations");
+      const res = await this.$axios.get("/apiV1/get_translates");
       this.allData = res.data;
       this.pageFilter(firstTab);
     } catch (err) {
@@ -181,18 +190,20 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.update-button {
-  position: fixed;
-  top: 7em;
-  right: 2em;
-  transition: top 0.5s;
-}
-
-.update-button-scroll {
-  position: fixed;
-  top: 4em;
-  right: 2em;
-  transition: top 0.6s;
+.table-header {
+  height: 80px;
+  div {
+    background-color: #cdd2c6;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: bold;
+    height: 100%;
+    padding: 0;
+    margin: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 .button-transition {
   transition: all 0.3s;
