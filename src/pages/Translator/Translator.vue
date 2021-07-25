@@ -60,11 +60,12 @@
               </div>
               <div class="col-6">
                 <q-input
-                  outlined
                   class="text-body1"
                   v-model="item.translatedText.en"
                   autogrow
-                  @change="storeChanges(item.key, item.translatedText.en)"
+                  @keydown="storeChanges(item.key, item.translatedText.en)"
+                  bg-color="white"
+                  outlined
                 />
               </div>
               <div class="col text-right q-pr-lg">
@@ -91,7 +92,7 @@
             </div>
           </div>
           <q-btn
-            color="white"
+            :color="changedDataSize == 0 ? 'grey' : 'positive'"
             text-color="black"
             label="Update"
             @click="updateTranslation"
@@ -101,11 +102,17 @@
               'q-py-xs': true,
               'update-button': !scrollOn,
               'update-button-scroll': scrollOn,
+              'button-transition': true,
             }"
           >
-            <q-badge rounded color="red" floating>{{
-              changedDataSize
-            }}</q-badge>
+            <q-badge
+              rounded
+              color="red"
+              floating
+              :class="changedDataSize == 0 ? 'invisible' : ''"
+              class="button-transition"
+              >{{ changedDataSize }}</q-badge
+            >
           </q-btn>
         </div>
       </q-page>
@@ -153,7 +160,11 @@ export default {
       this.changedData.set(key, changes);
       this.changedDataSize = this.changedData.size;
     },
-    updateTranslation() {},
+    async updateTranslation() {
+      const obj = Object.fromEntries(this.changedData);
+      const res = await this.$axios.post("/apiV1/update_translations", obj);
+      console.log(res);
+    },
   },
   async created() {
     const firstTab = "site";
@@ -182,5 +193,8 @@ export default {
   top: 4em;
   right: 2em;
   transition: top 0.6s;
+}
+.button-transition {
+  transition: all 0.3s;
 }
 </style>
