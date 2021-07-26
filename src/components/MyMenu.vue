@@ -64,7 +64,7 @@
               'menu-button': !scrollOn,
               'menu-button-scroll': scrollOn,
             }"
-            color="primary"
+            color="white"
           />
         </div>
       </q-toolbar>
@@ -150,6 +150,7 @@ export default {
     },
     logout() {
       this.$store.dispatch("Auth/signOut");
+      this.$router.push("/");
     },
   },
   computed: {

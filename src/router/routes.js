@@ -23,6 +23,7 @@ const routes = [
 
   {
     path: "/translator",
+    meta: { requiresAuth: true },
     component: () => import("pages/Translator/Translator"),
   },
   {

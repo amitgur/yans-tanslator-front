@@ -36,14 +36,7 @@
           </div>
 
           <!-- table header -->
-          <div class="q-pa-md">
-            <div class="row table-header">
-              <div class="col-4"><div>Source Language Text</div></div>
-              <div class="col-6"><span>Input</span></div>
-              <div class="col" style="text-align: right">Details</div>
-              <div class="col">Update</div>
-            </div>
-          </div>
+          <div class="q-pa-sm"></div>
 
           <!-- table content -->
           <div class="q-px-md">
@@ -56,6 +49,7 @@
               <!-- source text -->
               <div class="col-4">
                 <div class="q-px-lg q-py-md q-mx-md">
+                  <!-- TODO: This should be the language translating from, not the TEXT -->
                   <div class="text-italic">{{ item.text }}</div>
                 </div>
               </div>
@@ -63,8 +57,10 @@
                 <q-input
                   outlined
                   class="bg-white"
-                  v-model="item.translatedText.en"
-                  @keydown="storeChanges(item.key, item.translatedText.en)"
+                  v-model="item.translatedText[user.languageTo]"
+                  @keyup="
+                    storeChanges(item.key, item.translatedText[user.languageTo])
+                  "
                   autogrow
                 >
                   <template v-slot:append>
@@ -74,7 +70,7 @@
                   </template>
                 </q-input>
               </div>
-              <div class="col-1" style="text-align: center">
+              <div class="col-2" style="text-align: center">
                 <q-btn class="bg-white" label="details">
                   <q-popup-proxy>
                     <q-banner class="q-pa-lg">
@@ -95,34 +91,32 @@
                   </q-popup-proxy>
                 </q-btn>
               </div>
-              <div class="col-1" style="text-align: center">
-                <q-btn color="secondary" text-color="black" label="Update" />
-              </div>
             </div>
           </div>
-          <q-btn
-            :color="changedDataSize == 0 ? 'grey' : 'positive'"
-            text-color="black"
-            label="Update"
-            @click="updateTranslation"
-            :class="{
-              'text-subtitle1': true,
-              'q-px-md': true,
-              'q-py-xs': true,
-              'update-button': !scrollOn,
-              'update-button-scroll': scrollOn,
-              'button-transition': true,
-            }"
-          >
-            <q-badge
-              rounded
-              color="red"
-              floating
-              :class="changedDataSize == 0 ? 'invisible' : ''"
-              class="button-transition"
-              >{{ changedDataSize }}</q-badge
+          <q-page-sticky position="bottom-right" :offset="[18, 18]">
+            <q-btn
+              fab
+              :color="changedDataSize == 0 ? 'grey-5' : 'accent'"
+              text-color="black"
+              :label="scrollDown ? '' : 'Update'"
+              icon="update"
+              @click="updateTranslation"
+              class="text-subtitle1 update-button-transition update-button"
+              :class="{
+                'q-px-lg': !scrollDown,
+              }"
             >
-          </q-btn>
+              <q-badge
+                rounded
+                color="red"
+                floating
+                :class="changedDataSize == 0 ? 'invisible' : ''"
+                class="update-button-transition q-px-sm"
+                style="font-size: 1em; min-width: 1.5em; height: 1.5em;"
+                >{{ changedDataSize }}</q-badge
+              >
+            </q-btn>
+          </q-page-sticky>
         </div>
       </q-page>
     </q-page-container>
@@ -134,6 +128,7 @@ import MyMenu from "components/MyMenu";
 import menuList from "pages/Translator/menuList";
 import myMixins from "src/mixins/myMixins";
 import bandpadLanguagePages from "pages/languagePages";
+import { mapState } from "vuex";
 
 export default {
   name: "Translator",
@@ -146,12 +141,14 @@ export default {
       menuList,
       tab: "",
       allData: [],
+      currentData: [],
       displayData: [],
       translateText: "",
       searchText: "",
       bandpadLanguagePages,
       changedData: new Map(),
       changedDataSize: 0,
+      scrollDown: false,
     };
   },
   methods: {
@@ -159,28 +156,57 @@ export default {
       this.displayData = this.allData.filter((e) => e.page === filterString);
     },
     onTranslatorScroll(info) {
-      if (info.position > 50) {
-        this.scrollOn = true;
+      if (info.direction == "down") {
+        this.scrollDown = true;
       } else {
-        this.scrollOn = false;
+        this.scrollDown = false;
       }
     },
     storeChanges(key, changes) {
+      //MODIFY ROUTE BASED ON SCHEMA
+      // const current = this.currentData.find((item) => item.key === key)
+      //   .translatedText[user.languageTo];
+      // console.log(current);
+
+      // TODO: monitor last translation changes/when to change last translation
+      // should happen in the updateTranslation() call
+      // if (changes === current) {
+      //   // check and remove from Map
+      //   this.changedData.delete(key);
+      //   this.changedDataSize = this.changedData.size;
+      // } else {
+      // add to map
       this.changedData.set(key, changes);
       this.changedDataSize = this.changedData.size;
+      // }
     },
     async updateTranslation() {
-      const obj = Object.fromEntries(this.changedData);
-      const res = await this.$axios.post("/apiV1/update_translations", obj);
-      console.log(res);
+      if (this.changedDataSize > 0) {
+        const obj = Object.fromEntries(this.changedData);
+        const res = await this.$axios.post("/apiV1/update_translations", obj);
+
+        this.$q.notify({
+          message: "Updated Translations",
+          color: "bg-secondary",
+        });
+        this.changedData.clear();
+        this.changedDataSize = this.changedData.size;
+      }
     },
+  },
+  computed: {
+    ...mapState("Auth", ["user"]),
   },
   async created() {
     const firstTab = "site";
     this.tab = firstTab;
+    console.log(this.user);
     try {
-      const res = await this.$axios.get("/apiV1/get_translates");
+      const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
+
+      res.data.forEach((item) => this.currentData.push(item));
+
       this.pageFilter(firstTab);
     } catch (err) {
       this.serverError(err);
@@ -205,7 +231,12 @@ export default {
     justify-content: center;
   }
 }
-.button-transition {
-  transition: all 0.3s;
+
+.update-button-transition {
+  transition: all 0.4s;
+}
+
+.update-button {
+  opacity: 0.8;
 }
 </style>

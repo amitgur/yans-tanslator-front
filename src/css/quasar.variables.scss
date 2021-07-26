@@ -13,22 +13,22 @@
 // Tip: Use the "Theme Builder" on Quasar's documentation website.
 
 // Example: Import Open Sans with multiple weights
-@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap");
 
 // Set the default font-family
-$typography-font-family: 'Assistant', sans-serif !default;
+$typography-font-family: "Assistant", sans-serif !default;
 $body-font-size: 18px;
 
 // Fix font-weight values to match the imported font family weights
 //$text-weights: (thin: 300, light: 400, regular: 600, medium: 700, bold: 800, bolder: 800) !default
 
-$primary   : rgb(44, 62, 80);
-$secondary : rgba(22, 160, 133, 0.35);
-$accent    : #9C27B0;
+$primary: rgb(44, 62, 80);
+$secondary: rgba(22, 160, 133, 0.35);
+$accent: #3082e6;
+$dark: #1d1d1d;
 $secondary-dark: #788896;
-$dark      : #1D1D1D;
 
-$positive  : #21BA45;
-$negative  : #C10015;
-$info      : #31CCEC;
-$warning   : #F2C037;
+$positive: #21ba45;
+$negative: #c10015;
+$info: #31ccec;
+$warning: #f2c037;
