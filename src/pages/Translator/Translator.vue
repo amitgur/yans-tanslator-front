@@ -8,16 +8,29 @@
           <q-input
             bottom-slots
             v-model="searchText"
+            @keyup="searchFilter"
             label="Search"
             style="max-width: 400px"
           >
             <template v-slot:append>
+              <q-icon
+                v-if="searchText"
+                name="cancel"
+                @click.stop="
+                  searchText = '';
+                  searchFilter();
+                "
+                class="cursor-pointer"
+              />
               <q-icon name="search" />
             </template>
           </q-input>
 
           <!-- tabs -page selector -->
-          <div>
+          <div
+            :class="{ hidden: searchText != '' }"
+            style="transition: all 0.5s"
+          >
             <q-card>
               <q-tabs
                 class="bg-primary text-white"
@@ -58,7 +71,7 @@
                   outlined
                   color="grey"
                   class="bg-white input-transition"
-                  :class="changedData.get(item.key) ? 'border-input' : ''"
+                  :class="{ 'border-input': changedData.get(item.key) }"
                   v-model="item.translatedText[user.languageTo]"
                   @keyup="
                     storeChanges(item.key, item.translatedText[user.languageTo])
@@ -94,6 +107,12 @@
                 </q-btn>
               </div>
             </div>
+            <div
+              class="text-h1 text-center text-grey-4"
+              :class="{ hidden: displayData.length > 0 }"
+            >
+              No Matches
+            </div>
           </div>
           <q-page-sticky position="bottom-right" :offset="[18, 18]">
             <q-btn
@@ -112,7 +131,7 @@
                 rounded
                 color="red"
                 floating
-                :class="changedDataSize == 0 ? 'hidden' : ''"
+                :class="{ hidden: changedDataSize == 0 }"
                 class="update-button-transition q-px-sm"
                 style="font-size: 1em; min-width: 1.5em; height: 1.5em;"
                 >{{ changedDataSize }}</q-badge
@@ -145,7 +164,6 @@ export default {
       allData: [],
       currentData: [],
       displayData: [],
-      translateText: "",
       searchText: "",
       bandpadLanguagePages,
       changedData: new Map(),
@@ -156,6 +174,27 @@ export default {
   methods: {
     pageFilter(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
+    },
+    searchFilter() {
+      const s = this.searchText.toLowerCase();
+      // default to tab if search is empty
+      if (s == "") {
+        this.pageFilter(this.tab);
+        return;
+      }
+      // search page, key, and translatedText.
+      // TODO: add translatedFrom Text?
+      this.displayData = this.allData.filter(
+        (e) =>
+          e.page.toLowerCase() == s ||
+          e.key.toLowerCase() == s ||
+          e.translatedText[this.user.languageTo].toLowerCase() == s ||
+          e.page.toLowerCase().includes(s) ||
+          e.key.toLowerCase().includes(s) ||
+          e.translatedText[this.user.languageTo].toLowerCase().includes(s)
+      );
+      // loading animation
+      // no match output
     },
     onTranslatorScroll(info) {
       if (info.direction == "down") {
