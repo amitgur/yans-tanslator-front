@@ -53,10 +53,12 @@
                   <div class="text-italic">{{ item.text }}</div>
                 </div>
               </div>
-              <div class="col-6">
+              <div class="col-6 ">
                 <q-input
                   outlined
-                  class="bg-white"
+                  color="grey"
+                  class="bg-white input-transition"
+                  :class="changedData.get(item.key) ? 'border-input' : ''"
                   v-model="item.translatedText[user.languageTo]"
                   @keyup="
                     storeChanges(item.key, item.translatedText[user.languageTo])
@@ -96,7 +98,7 @@
           <q-page-sticky position="bottom-right" :offset="[18, 18]">
             <q-btn
               fab
-              :color="changedDataSize == 0 ? 'grey-5' : 'accent'"
+              :color="changedDataSize == 0 ? 'grey-5' : 'green'"
               text-color="black"
               :label="scrollDown ? '' : 'Update'"
               icon="update"
@@ -110,7 +112,7 @@
                 rounded
                 color="red"
                 floating
-                :class="changedDataSize == 0 ? 'invisible' : ''"
+                :class="changedDataSize == 0 ? 'hidden' : ''"
                 class="update-button-transition q-px-sm"
                 style="font-size: 1em; min-width: 1.5em; height: 1.5em;"
                 >{{ changedDataSize }}</q-badge
@@ -163,22 +165,19 @@ export default {
       }
     },
     storeChanges(key, changes) {
-      //MODIFY ROUTE BASED ON SCHEMA
-      // const current = this.currentData.find((item) => item.key === key)
-      //   .translatedText[user.languageTo];
-      // console.log(current);
-
+      const current = this.currentData.find((item) => item.key === key)
+        .translatedText[this.user.languageTo];
       // TODO: monitor last translation changes/when to change last translation
       // should happen in the updateTranslation() call
-      // if (changes === current) {
-      //   // check and remove from Map
-      //   this.changedData.delete(key);
-      //   this.changedDataSize = this.changedData.size;
-      // } else {
-      // add to map
-      this.changedData.set(key, changes);
-      this.changedDataSize = this.changedData.size;
-      // }
+      if (changes === current) {
+        // check and remove from Map
+        this.changedData.delete(key);
+        this.changedDataSize = this.changedData.size;
+      } else {
+        // add to map
+        this.changedData.set(key, changes);
+        this.changedDataSize = this.changedData.size;
+      }
     },
     async updateTranslation() {
       if (this.changedDataSize > 0) {
@@ -189,6 +188,14 @@ export default {
           message: "Updated Translations",
           color: "bg-secondary",
         });
+        // fix currentData on update
+        for (const [key, value] of this.changedData) {
+          const updateDataObject = this.currentData.find(
+            (item) => item.key === key
+          );
+          updateDataObject.translatedText[this.user.languageTo] = value;
+        }
+
         this.changedData.clear();
         this.changedDataSize = this.changedData.size;
       }
@@ -200,12 +207,14 @@ export default {
   async created() {
     const firstTab = "site";
     this.tab = firstTab;
-    console.log(this.user);
     try {
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
 
-      res.data.forEach((item) => this.currentData.push(item));
+      this.allData.forEach((item) => {
+        const clone = JSON.parse(JSON.stringify(item));
+        this.currentData.push(clone);
+      });
 
       this.pageFilter(firstTab);
     } catch (err) {
@@ -238,5 +247,14 @@ export default {
 
 .update-button {
   opacity: 0.8;
+}
+
+.input-transition {
+  transition: all 0.4s ease;
+}
+
+.border-input {
+  box-shadow: 0 0 0 0.25em rgba(0, 128, 0, 0.3);
+  border-radius: 0.3em;
 }
 </style>

@@ -128,20 +128,20 @@ export default {
       let response;
       try {
         response = await this.$axios.post("/apiV1/sign_up", user);
-        // route to login
+        // send to login
         this.myDialog(response.data.msg);
         if (response.data.status === "ok") {
-          this.login(user);
+          this.autoLogin(user);
         }
       } catch (err) {
         this.serverError(err);
       }
     },
 
-    async login(user) {
+    async autoLogin(user) {
       try {
         const response = await this.$axios.post("/apiV1/login_user", user);
-        // route to login
+        // auto-login
         this.$store.dispatch("Auth/signIn", response.data);
         this.$router.push("/");
       } catch (err) {
