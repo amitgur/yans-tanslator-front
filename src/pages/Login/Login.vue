@@ -13,7 +13,7 @@
               clearable
               v-model="username"
               type="text"
-              label="Email"
+              label="Username"
               :rules="[(val) => !!val || 'Field is required']"
             />
             <q-input
@@ -78,14 +78,16 @@ export default {
         const response = await this.$axios.post("/apiV1/login_user", user);
         // route to login
         this.$store.dispatch("Auth/signIn", response.data);
-        this.$router.push("/");
+        this.isAdmin
+          ? this.$router.push("/admin-translator")
+          : this.$router.push("/translator");
       } catch (err) {
         this.serverError(err);
       }
     },
   },
   computed: {
-    ...mapState("Auth", ["isSignIn"]),
+    ...mapState("Auth", ["isSignIn", "isAdmin"]),
   },
   // mounted() {
   //   window.addEventListener("keyup", (e) => {

@@ -66,6 +66,13 @@
             }"
             color="white"
           />
+          <q-icon
+            name="person"
+            class="q-pa-sm"
+            size="sm"
+            v-show="isSignIn && user.profile === 'admin'"
+            color="white"
+          />
         </div>
       </q-toolbar>
     </q-header>
@@ -179,5 +186,31 @@ export default {
   font-size: 17px;
   cursor: pointer;
   transition: all 0.5s;
+}
+
+.small-menu-button-scroll {
+  margin-left: auto;
+  cursor: pointer;
+  transition: all 0.5s;
+  height: 30px;
+  width: 30px;
+  font-size: 1.2em;
+}
+
+.small-menu-button {
+  margin-left: auto;
+  cursor: pointer;
+  transition: all 0.5s;
+  height: 40px;
+  width: 40px;
+  font-size: 1.7em;
+}
+
+.icon-button {
+  transition: all 0.5s;
+  border-radius: 50%;
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
 }
 </style>

@@ -12,12 +12,9 @@
               filled
               clearable
               v-model="username"
-              type="email"
-              label="Email"
-              :rules="[
-                (val) => !!val || 'Field is required',
-                this.validateEmail,
-              ]"
+              type="username"
+              label="Username"
+              :rules="[(val) => !!val || 'Field is required']"
             />
             <q-input
               square
@@ -38,20 +35,21 @@
               label="Password"
               :rules="[(val) => !!val || 'Field is required']"
             />
-            <q-input
-              square
-              filled
-              clearable
-              v-model="magicWord"
-              type="text"
-              label="Magic Word"
-              :rules="[(val) => !!val || 'Field is required']"
-            />
+            <p class="hint">Select language to translate to</p>
             <q-select
               filled
               v-model="languageTo"
               :options="languageList"
               label="Language"
+            />
+            <q-input
+              square
+              filled
+              clearable
+              v-model="secretWord"
+              type="text"
+              label="Secret Word"
+              :rules="[(val) => !!val || 'Field is required']"
             />
           </q-form>
         </q-card-section>
@@ -73,7 +71,6 @@
 <script>
 import myMixins from "src/mixins/myMixins";
 import languageList from "pages/SignUp/languageList";
-import emailRegex from "email-regex";
 
 export default {
   name: "SignUp",
@@ -83,26 +80,18 @@ export default {
       username: null,
       password: null,
       name: null,
-      magicWord: null,
-      languageTo: null,
+      secretWord: null,
+      languageTo: languageList[0],
       languageList,
     };
   },
   methods: {
-    validateEmail(val) {
-      return !!emailRegex().test(val) || "Not a valid Email";
-    },
-
     async signUp() {
-      if (!this.username || !this.password || !this.name || !this.magicWord) {
+      if (!this.username || !this.password || !this.name || !this.secretWord) {
         this.myDialog("Some of the fields are missing");
         return;
       }
-      if (!emailRegex().test(this.username)) {
-        // not a valid email
-        this.myDialog("Please enter a valid Email");
-        return;
-      }
+
       if (this.password && this.password.length < 4) {
         // too short password
         this.myDialog(
@@ -110,8 +99,11 @@ export default {
         );
         return;
       }
-      if (this.magicWord !== process.env.MAGIC_WORD) {
-        this.myDialog("Check again your magic word");
+      if (
+        this.secretWord != process.env.TRANSLATOR_WORD &&
+        this.secretWord != process.env.ADMIN_WORD
+      ) {
+        this.myDialog("Check again your secret word");
         return;
       }
       if (!this.languageTo) {
@@ -125,6 +117,9 @@ export default {
         name: this.name,
         languageTo: this.languageTo.tag,
       };
+      if (this.secretWord === process.env.ADMIN_WORD) {
+        user.profile = "admin";
+      }
       let response;
       try {
         response = await this.$axios.post("/apiV1/sign_up", user);
@@ -143,7 +138,7 @@ export default {
         const response = await this.$axios.post("/apiV1/login_user", user);
         // auto-login
         this.$store.dispatch("Auth/signIn", response.data);
-        this.$router.push("/");
+        this.$router.push("/translator");
       } catch (err) {
         this.serverError(err);
       }

@@ -18,9 +18,13 @@
 const menuList = [
   {
     type: "link",
+    label: "Home",
+    link: "/",
+  },
+  {
+    type: "link",
     label: "Translate",
     link: "/translator",
-    alink: "/admin-translator",
   },
 ];
 

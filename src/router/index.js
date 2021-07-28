@@ -13,7 +13,7 @@ Vue.use(VueRouter);
  * with the Router instance.
  */
 
-export default function ({ store }) {
+export default function({ store }) {
   const Router = new VueRouter({
     scrollBehavior: () => ({ x: 0, y: 0 }),
     routes,
@@ -34,6 +34,20 @@ export default function ({ store }) {
       // route by user
       if (isSignIn) {
         next();
+      } else {
+        next("/login");
+      }
+    } else if (to.matched.some((route) => route.meta.requiresAdminAuth)) {
+      // init user for the first time
+      await store.dispatch("Auth/checkSignIn");
+      const isSignIn = store.getters["Auth/getIsSignIn"];
+      const isAdmin = store.getters["Auth/getIsAdmin"];
+      // route by user
+      if (isSignIn && isAdmin) {
+        next();
+      } else if (isSignIn) {
+        // error dialog
+        next("/");
       } else {
         next("/login");
       }

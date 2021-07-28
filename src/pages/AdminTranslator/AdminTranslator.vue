@@ -47,103 +47,144 @@
               </q-tabs>
             </q-card>
           </div>
-
           <!-- table content -->
-          <div class="q-px-md q-py-lg">
+          <div class="q-pt-md">
             <div
-              v-for="item in displayData"
-              :key="item.key"
-              class="row justify-center items-center q-py-md q-my-sm bg-blue-grey-1"
+              class="row justify-center items-center q-py-xs q-my-sm bg-blue-grey-9 text-white text-bold text-h6"
               style="border-radius: 0.4em"
             >
-              <!-- source text -->
-              <div class="col-4">
+              <div class="col-2">
                 <div class="q-px-lg q-py-md q-mx-md">
-                  <!-- TODO: This should be the language translating from, not the TEXT -->
-                  <div class="text-italic">
-                    {{ item.translatedText[user.languageFrom] }}
+                  <div>
+                    Key
                   </div>
                 </div>
               </div>
-              <div class="col-6 ">
-                <q-input
-                  outlined
-                  color="grey"
-                  class="bg-white input-transition"
-                  :class="{ 'border-input': changedData.get(item.key) }"
-                  v-model="item.translatedText[user.languageTo]"
-                  @keyup="
-                    storeChanges(item.key, item.translatedText[user.languageTo])
-                  "
-                  autogrow
-                >
-                  <template v-slot:append>
-                    <q-avatar>
-                      <q-icon name="las la-pen" />
-                    </q-avatar>
-                  </template>
-                </q-input>
+              <div class="col-4 ">
+                <div class="q-px-lg q-py-md q-mx-md">
+                  English Text
+                </div>
               </div>
-              <div class="col-2" style="text-align: center">
-                <q-btn class="bg-white" label="details">
-                  <q-popup-proxy>
-                    <q-banner class="q-pa-lg">
-                      <template v-slot:avatar>
-                        <q-icon name="info" color="primary" />
-                      </template>
-                      <div>Description:</div>
-                      <hr color="lightgrey" size="0.5" />
-                      <div>
-                        {{ item.description ? item.description : "-" }}
-                      </div>
-                      <br />
-                      <div>
-                        Key:
-                        {{ item.key }}
-                      </div>
-                    </q-banner>
-                  </q-popup-proxy>
-                </q-btn>
+              <div class="col-4 ">
+                <div class="q-px-lg q-py-md q-mx-md">
+                  Description
+                </div>
               </div>
-            </div>
-            <div
-              :class="{ hidden: displayData.length > 0 }"
-              class="q-my-xl q-py-xl justify-center"
-            >
-              <div ref="loader" class="loader q-ma-none" />
-              <div
-                ref="no-matches"
-                class="text-h1 text-center text-grey-4 hidden"
-              >
-                No Matches
+              <div class="col-1" style="text-align: center">
+                Edit
+              </div>
+              <div class="col-1">
+                Delete
               </div>
             </div>
           </div>
-          <q-page-sticky position="bottom-right" :offset="[18, 18]">
-            <q-btn
-              fab
-              :color="changedDataSize == 0 ? 'grey-5' : 'green'"
-              text-color="black"
-              :label="scrollDown ? '' : 'Update'"
-              icon="update"
-              @click="updateTranslation"
-              class="text-subtitle1 update-button-transition update-button"
-              :class="{
-                'q-px-lg': !scrollDown,
-              }"
-            >
-              <q-badge
+          <div
+            v-for="item in displayData"
+            :key="item.key"
+            class="row justify-center items-center q-py-md q-my-sm bg-blue-grey-1"
+            style="border-radius: 0.4em"
+          >
+            <!-- source text -->
+            <div class="col-2">
+              <div class="q-px-lg q-py-md q-mx-md">
+                <div>
+                  {{ item.key }}
+                </div>
+              </div>
+            </div>
+            <div class="col-4 ">
+              <div class="q-px-lg q-py-md q-mx-md">
+                <div class="text-italic">
+                  {{ item.translatedText.en }}
+                </div>
+              </div>
+            </div>
+            <div class="col-4 ">
+              <div class="q-px-lg q-py-md q-mx-md">
+                <div class="text-italic">
+                  {{ item.description ? item.description : "-" }}
+                </div>
+              </div>
+            </div>
+            <div class="col-1" style="text-align: center">
+              <!-- <q-btn class="bg-white crud-button" rounded icon="edit"> </q-btn> -->
+              <q-icon
+                class="crud-button"
+                name="edit"
                 rounded
-                color="red"
-                floating
-                :class="{ hidden: changedDataSize == 0 }"
-                class="update-button-transition q-px-sm"
-                style="font-size: 1em; min-width: 1.5em; height: 1.5em;"
-                >{{ changedDataSize }}</q-badge
-              >
-            </q-btn>
-          </q-page-sticky>
+                @click="editItem = true"
+              />
+            </div>
+            <div class="col-1">
+              <q-icon
+                class="crud-button"
+                name="delete"
+                rounded
+                @click="deleteItem = true"
+              />
+            </div>
+          </div>
+          <div
+            :class="{ hidden: displayData.length > 0 }"
+            class="q-my-xl q-py-xl justify-center"
+          >
+            <div ref="loader" class="loader q-ma-none" />
+            <div
+              ref="no-matches"
+              class="text-h1 text-center text-grey-4 hidden"
+            >
+              No Matches
+            </div>
+          </div>
         </div>
+        <q-page-sticky position="bottom-right" :offset="[18, 18]">
+          <q-btn
+            fab
+            color="accent"
+            icon="add"
+            @click="composeItem = true"
+            class="text-subtitle1 update-button-transition update-button text-bold text-white"
+          >
+          </q-btn>
+        </q-page-sticky>
+        <q-dialog v-model="composeItem"
+          ><q-card>
+            <q-card-section>
+              <div class="text-h6">Alert</div>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+              wow1
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="OK" color="primary" v-close-popup />
+            </q-card-actions> </q-card
+        ></q-dialog>
+        <q-dialog v-model="editItem"
+          ><q-card>
+            <q-card-section>
+              <div class="text-h6">Alert</div>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none"> wow2</q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="OK" color="primary" v-close-popup />
+            </q-card-actions> </q-card
+        ></q-dialog>
+        <q-dialog v-model="deleteItem"
+          ><q-card>
+            <q-card-section>
+              <div class="text-h6">Alert</div>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none"> wow3</q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="OK" color="primary" v-close-popup />
+            </q-card-actions> </q-card
+        ></q-dialog>
       </q-page>
     </q-page-container>
   </q-layout>
@@ -171,9 +212,10 @@ export default {
       displayData: [],
       searchText: "",
       bandpadLanguagePages,
-      changedData: new Map(),
-      changedDataSize: 0,
       scrollDown: false,
+      composeItem: false,
+      editItem: false,
+      deleteItem: false,
     };
   },
 
@@ -203,7 +245,7 @@ export default {
       );
 
       // loading animation
-      this.loadMatches();
+      // this.loadMatches();
 
       // no match output
       this.noMatches();
@@ -215,42 +257,8 @@ export default {
         this.scrollDown = false;
       }
     },
-    storeChanges(key, changes) {
-      const current = this.currentData.find((item) => item.key === key)
-        .translatedText[this.user.languageTo];
-      // TODO: monitor last translation changes/when to change last translation
-      // should happen in the updateTranslation() call
-      if (changes === current) {
-        // check and remove from Map
-        this.changedData.delete(key);
-        this.changedDataSize = this.changedData.size;
-      } else {
-        // add to map
-        this.changedData.set(key, changes);
-        this.changedDataSize = this.changedData.size;
-      }
-    },
-    async updateTranslation() {
-      if (this.changedDataSize > 0) {
-        const res = await this.$axios.post(
-          "/apiV1/update_translations",
-          Object.fromEntries(this.changedData)
-        );
-
-        this.$q.notify({
-          message: "Updated Translations",
-        });
-        // fix currentData on update
-        for (const [key, value] of this.changedData) {
-          const updateDataObject = this.currentData.find(
-            (item) => item.key === key
-          );
-          updateDataObject.translatedText[this.user.languageTo] = value;
-        }
-
-        this.changedData.clear();
-        this.changedDataSize = this.changedData.size;
-      }
+    async compose() {
+      console.log("test");
     },
     noMatches() {
       if (this.displayData.length == 0) {
@@ -333,6 +341,24 @@ export default {
   height: 4em;
   margin: auto;
   animation: spin 1.6s cubic-bezier(0.72, 0.2, 0.2, 0.77) infinite;
+}
+
+.crud-button {
+  margin-left: auto;
+  cursor: pointer;
+  height: 50px;
+  width: 50px;
+  font-size: 1.7em;
+  transition: all 0.5s;
+  border-radius: 50%;
+  color: rgb(114, 114, 114);
+  &:hover {
+    color: black;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  &:active {
+    background-color: rgba(128, 128, 128, 0.7);
+  }
 }
 
 @keyframes spin {

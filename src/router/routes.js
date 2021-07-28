@@ -30,6 +30,11 @@ const routes = [
     path: "/",
     component: () => import("pages/Home/Home.vue"),
   },
+  {
+    path: "/admin-translator",
+    meta: { requiresAuth: true },
+    component: () => import("pages/AdminTranslator/AdminTranslator"),
+  },
 ];
 
 // Always leave this as last one
