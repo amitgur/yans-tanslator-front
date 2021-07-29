@@ -20,6 +20,7 @@
         <q-btn
           v-for="(menuItem, index) in menuList"
           :key="index"
+          v-show="showMenuItemByUser(menuItem.profile)"
           flat
           @click="clickMenuItem(menuItem)"
           class="q-mr-sm gt-sm english-small text-white text-bold"
@@ -68,6 +69,13 @@
           />
           <q-icon
             name="person"
+            class="q-pa-sm"
+            size="sm"
+            v-show="isSignIn && user.profile === 'translator'"
+            color="white"
+          />
+          <q-icon
+            name="supervisor_account"
             class="q-pa-sm"
             size="sm"
             v-show="isSignIn && user.profile === 'admin'"
@@ -126,8 +134,13 @@ export default {
       }
     },
     async clickMenuItem(menuItem) {
-      // check for new click
+      // check current path
+      if (this.$route.path == menuItem.link) {
+        return;
+      }
+
       if (this.menuTag === menuItem.tag) {
+        // check for new click
         return;
       } else {
         this.menuTag = menuItem.tag;
@@ -158,6 +171,9 @@ export default {
     logout() {
       this.$store.dispatch("Auth/signOut");
       this.$router.push("/");
+    },
+    showMenuItemByUser(profile) {
+      return profile === this.user?.profile;
     },
   },
   computed: {

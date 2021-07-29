@@ -16,11 +16,19 @@
  ******************************/
 
 const menuList = [
+  { type: "link", label: "Home", link: "/", profile: "translator" },
   {
     type: "link",
     label: "Translate",
     link: "/translator",
-    alink: "/admin-translator",
+    profile: "translator",
+  },
+  { type: "link", label: "Home", link: "/", profile: "admin" },
+  {
+    type: "link",
+    label: "Admin",
+    link: "/admin-translator",
+    profile: "admin",
   },
 ];
 

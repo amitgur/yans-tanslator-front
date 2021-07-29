@@ -9,3 +9,7 @@ export function getIsSignIn(state) {
 export function getUser(state) {
   return state.user;
 }
+
+export function getIsAdmin(state) {
+  return state.isSignIn && state.user && state.user.profile === "admin";
+}

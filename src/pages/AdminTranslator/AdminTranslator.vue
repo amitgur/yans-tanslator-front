@@ -26,7 +26,7 @@
             </template>
           </q-input>
 
-          <!-- tabs -page selector -->
+          <!-- tabs-page selector -->
           <div
             :class="{ hidden: searchText != '' }"
             style="transition: all 0.5s"
@@ -60,14 +60,14 @@
                   </div>
                 </div>
               </div>
-              <div class="col-4 ">
-                <div class="q-px-lg q-py-md q-mx-md">
-                  English Text
-                </div>
-              </div>
-              <div class="col-4 ">
+              <div class="col-5 ">
                 <div class="q-px-lg q-py-md q-mx-md">
                   Description
+                </div>
+              </div>
+              <div class="col-3 ">
+                <div class="q-px-lg q-py-md q-mx-md">
+                  Languages Translated To
                 </div>
               </div>
               <div class="col-1" style="text-align: center">
@@ -92,27 +92,27 @@
                 </div>
               </div>
             </div>
-            <div class="col-4 ">
-              <div class="q-px-lg q-py-md q-mx-md">
-                <div class="text-italic">
-                  {{ item.translatedText.en }}
-                </div>
-              </div>
-            </div>
-            <div class="col-4 ">
+
+            <div class="col-5 ">
               <div class="q-px-lg q-py-md q-mx-md">
                 <div class="text-italic">
                   {{ item.description ? item.description : "-" }}
                 </div>
               </div>
             </div>
+            <div class="col-3 ">
+              <div class="q-px-lg q-py-md q-mx-md">
+                <div class="text-italic">
+                  {{ Object.keys(item.translatedText).join(", ") }}
+                </div>
+              </div>
+            </div>
             <div class="col-1" style="text-align: center">
-              <!-- <q-btn class="bg-white crud-button" rounded icon="edit"> </q-btn> -->
               <q-icon
                 class="crud-button"
                 name="edit"
                 rounded
-                @click="editItem = true"
+                @click="sendItem(item)"
               />
             </div>
             <div class="col-1">
@@ -123,6 +123,7 @@
                 @click="deleteItem = true"
               />
             </div>
+            <!-- Dialogs -->
           </div>
           <div
             :class="{ hidden: displayData.length > 0 }"
@@ -147,52 +148,101 @@
           >
           </q-btn>
         </q-page-sticky>
-        <q-dialog v-model="composeItem"
-          ><q-card>
-            <q-card-section>
-              <div class="text-h6">Alert</div>
-            </q-card-section>
-
-            <q-card-section class="q-pt-none">
-              wow1
-            </q-card-section>
-
-            <q-card-actions align="right">
-              <q-btn flat label="OK" color="primary" v-close-popup />
-            </q-card-actions> </q-card
-        ></q-dialog>
-        <q-dialog v-model="editItem"
-          ><q-card>
-            <q-card-section>
-              <div class="text-h6">Alert</div>
-            </q-card-section>
-
-            <q-card-section class="q-pt-none"> wow2</q-card-section>
-
-            <q-card-actions align="right">
-              <q-btn flat label="OK" color="primary" v-close-popup />
-            </q-card-actions> </q-card
-        ></q-dialog>
-        <q-dialog v-model="deleteItem"
-          ><q-card>
-            <q-card-section>
-              <div class="text-h6">Alert</div>
-            </q-card-section>
-
-            <q-card-section class="q-pt-none"> wow3</q-card-section>
-
-            <q-card-actions align="right">
-              <q-btn flat label="OK" color="primary" v-close-popup />
-            </q-card-actions> </q-card
-        ></q-dialog>
       </q-page>
     </q-page-container>
+
+    <!-- Dialogs -->
+    <q-dialog persistent v-model="composeItem"
+      ><q-card class="input-fields q-pa-md">
+        <q-card-section>
+          <div class="text-h6">Add New Item</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none row justify-between">
+          <q-input class="col-6" outlined label="Key" />
+          <q-select
+            class="col-5"
+            outlined
+            label="Page"
+            :options="bandpadLanguagePages"
+            v-model="addNewItemPage"
+          />
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-input type="textarea" outlined label="English Text" />
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-input type="textarea" outlined label="Description" />
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Submit" color="accent" v-close-popup />
+        </q-card-actions> </q-card
+    ></q-dialog>
+    <q-dialog persistent v-model="editItem"
+      ><q-card class="input-fields q-pa-md">
+        <q-card-section>
+          <div class="text-h6">Edit Item</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none row justify-between">
+          <q-input
+            class="col-6"
+            outlined
+            disable
+            label="Key"
+            v-model="editItemData.key"
+          />
+          <q-select
+            class="col-5"
+            outlined
+            label="Page"
+            :options="bandpadLanguagePages"
+            v-model="editItemData.page"
+          />
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-input
+            type="textarea"
+            outlined
+            label="English Text"
+            v-model="editItemData.translatedText.en"
+          />
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <q-input
+            type="textarea"
+            outlined
+            label="Description"
+            v-model="editItemData.description"
+          />
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Submit" color="positive" v-close-popup />
+        </q-card-actions> </q-card
+    ></q-dialog>
+    <q-dialog persistent v-model="deleteItem"
+      ><q-card class="input-fields q-pa-md">
+        <q-card-section>
+          <div class="text-h6">Delete Item</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          Are you sure you want to delete?
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn flat label="Delete" color="negative" v-close-popup />
+        </q-card-actions> </q-card
+    ></q-dialog>
   </q-layout>
 </template>
 
 <script>
 import MyMenu from "components/MyMenu";
-import menuList from "pages/Translator/menuList";
+import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
 import bandpadLanguagePages from "pages/languagePages";
 import { mapState } from "vuex";
@@ -215,7 +265,9 @@ export default {
       scrollDown: false,
       composeItem: false,
       editItem: false,
+      editItemData: {},
       deleteItem: false,
+      addNewItemPage: "",
     };
   },
 
@@ -272,16 +324,21 @@ export default {
         this.$refs["no-matches"].classList.add("hidden");
       }
     },
+    sendItem(item) {
+      this.editItem = true;
+      this.editItemData = item;
+    },
   },
   computed: {
     ...mapState("Auth", ["user"]),
   },
   async created() {
-    const firstTab = "site";
+    const firstTab = this.bandpadLanguagePages[0];
     this.tab = firstTab;
     try {
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
+      this.editItemData = this.allData[0];
 
       this.allData.forEach((item) => {
         const clone = JSON.parse(JSON.stringify(item));
@@ -359,6 +416,10 @@ export default {
   &:active {
     background-color: rgba(128, 128, 128, 0.7);
   }
+}
+
+.input-fields {
+  width: 25em;
 }
 
 @keyframes spin {

@@ -40,14 +40,10 @@ export default function({ store }) {
     } else if (to.matched.some((route) => route.meta.requiresAdminAuth)) {
       // init user for the first time
       await store.dispatch("Auth/checkSignIn");
-      const isSignIn = store.getters["Auth/getIsSignIn"];
       const isAdmin = store.getters["Auth/getIsAdmin"];
       // route by user
-      if (isSignIn && isAdmin) {
+      if (isAdmin) {
         next();
-      } else if (isSignIn) {
-        // error dialog
-        next("/");
       } else {
         next("/login");
       }

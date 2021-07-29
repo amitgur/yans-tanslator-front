@@ -47,7 +47,7 @@
 <script>
 import MyMenu from "components/MyMenu";
 import myMixins from "src/mixins/myMixins";
-import menuList from "pages/Settings/menuList";
+import menuList from "pages/menuList";
 import languageList from "pages/Settings/languageList";
 import { mapState } from "vuex";
 

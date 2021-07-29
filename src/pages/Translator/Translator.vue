@@ -151,7 +151,7 @@
 
 <script>
 import MyMenu from "components/MyMenu";
-import menuList from "pages/Translator/menuList";
+import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
 import bandpadLanguagePages from "pages/languagePages";
 import { mapState } from "vuex";

@@ -77,8 +77,9 @@ export default {
       try {
         const response = await this.$axios.post("/apiV1/login_user", user);
         // route to login
-        this.$store.dispatch("Auth/signIn", response.data);
-        this.isAdmin
+        await this.$store.dispatch("Auth/signIn", response.data);
+        const isAdmin = this.$store.getters["Auth/getIsAdmin"];
+        isAdmin
           ? this.$router.push("/admin-translator")
           : this.$router.push("/translator");
       } catch (err) {
@@ -87,7 +88,7 @@ export default {
     },
   },
   computed: {
-    ...mapState("Auth", ["isSignIn", "isAdmin"]),
+    ...mapState("Auth", ["isSignIn"]),
   },
   // mounted() {
   //   window.addEventListener("keyup", (e) => {

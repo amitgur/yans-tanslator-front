@@ -17,7 +17,7 @@
 <script>
 import MyMenu from "components/MyMenu";
 import myMixins from "src/mixins/myMixins";
-import menuList from "pages/Home/menuList";
+import menuList from "pages/menuList";
 export default {
   mixins: [myMixins],
   components: { MyMenu },

@@ -70,7 +70,7 @@
 
 <script>
 import myMixins from "src/mixins/myMixins";
-import languageList from "pages/SignUp/languageList";
+import languageList from "src/pages/languageList";
 
 export default {
   name: "SignUp",
