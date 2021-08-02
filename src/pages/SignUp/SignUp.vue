@@ -100,8 +100,8 @@ export default {
         return;
       }
       if (
-        this.secretWord != process.env.TRANSLATOR_WORD &&
-        this.secretWord != process.env.ADMIN_WORD
+        this.secretWord !== process.env.TRANSLATOR_WORD &&
+        this.secretWord !== process.env.ADMIN_WORD
       ) {
         this.myDialog("Check again your secret word");
         return;

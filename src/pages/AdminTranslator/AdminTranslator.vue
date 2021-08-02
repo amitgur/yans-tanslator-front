@@ -28,7 +28,7 @@
 
           <!-- tabs-page selector -->
           <div
-            :class="{ hidden: searchText != '' }"
+            :class="{ hidden: searchText !== '' }"
             style="transition: all 0.5s"
           >
             <q-card>
@@ -55,27 +55,17 @@
             >
               <div class="col-2">
                 <div class="q-px-lg q-py-md q-mx-md">
-                  <div>
-                    Key
-                  </div>
+                  <div>Key</div>
                 </div>
               </div>
-              <div class="col-5 ">
-                <div class="q-px-lg q-py-md q-mx-md">
-                  Description
-                </div>
+              <div class="col-5">
+                <div class="q-px-lg q-py-md q-mx-md">Description</div>
               </div>
-              <div class="col-3 ">
-                <div class="q-px-lg q-py-md q-mx-md">
-                  Languages Translated To
-                </div>
+              <div class="col-3">
+                <div class="q-px-lg q-py-md q-mx-md">Already Translated</div>
               </div>
-              <div class="col-1" style="text-align: center">
-                Edit
-              </div>
-              <div class="col-1">
-                Delete
-              </div>
+              <div class="col-1" style="text-align: center">Edit</div>
+              <div class="col-1">Delete</div>
             </div>
           </div>
           <div
@@ -93,14 +83,14 @@
               </div>
             </div>
 
-            <div class="col-5 ">
+            <div class="col-5">
               <div class="q-px-lg q-py-md q-mx-md">
                 <div class="text-italic">
                   {{ item.description ? item.description : "-" }}
                 </div>
               </div>
             </div>
-            <div class="col-3 ">
+            <div class="col-3">
               <div class="q-px-lg q-py-md q-mx-md">
                 <div class="text-italic">
                   {{ Object.keys(item.translatedText).join(", ") }}
@@ -299,7 +289,7 @@
           <q-btn
             flat
             label="Submit"
-            :disabled="addPageData == ''"
+            :disabled="addPageData === ''"
             color="accent"
             v-close-popup
           />
@@ -376,7 +366,7 @@ export default {
     searchFilter() {
       const s = this.searchText.toLowerCase();
       // default to tab if search is empty
-      if (s == "") {
+      if (s === "") {
         this.pageFilter(this.tab);
         return;
       }
@@ -384,10 +374,10 @@ export default {
 
       this.displayData = this.allData.filter(
         (e) =>
-          e.page.toLowerCase() == s ||
-          e.key.toLowerCase() == s ||
-          e.translatedText[this.user.languageTo]?.toLowerCase() == s ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase() == s ||
+          e.page.toLowerCase() === s ||
+          e.key.toLowerCase() === s ||
+          e.translatedText[this.user.languageTo]?.toLowerCase() === s ||
+          e.translatedText[this.user.languageFrom]?.toLowerCase() === s ||
           e.page.toLowerCase().includes(s) ||
           e.key.toLowerCase().includes(s) ||
           e.translatedText[this.user.languageTo]?.toLowerCase().includes(s) ||
@@ -401,11 +391,7 @@ export default {
       this.noMatches();
     },
     onTranslatorScroll(info) {
-      if (info.direction == "down") {
-        this.scrollDown = true;
-      } else {
-        this.scrollDown = false;
-      }
+      this.scrollDown = info.direction === "down";
     },
     async submitChanges() {
       const sendData = {
@@ -455,16 +441,12 @@ export default {
       this.currentKey = item.key;
       this.editItemData = JSON.parse(JSON.stringify(item));
     },
-    checkChanges() {
+    checkChanges: function () {
       const current = JSON.stringify(
         this.currentData.find((item) => item.key === this.editItemData.key)
       );
       const changed = JSON.stringify(this.editItemData);
-      if (current != changed) {
-        this.editItemSubmit = true;
-      } else {
-        this.editItemSubmit = false;
-      }
+      this.editItemSubmit = current !== changed;
     },
   },
   computed: {
