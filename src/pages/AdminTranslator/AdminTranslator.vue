@@ -3,7 +3,7 @@
     <q-scroll-observer @scroll="onTranslatorScroll" />
     <my-menu :menu-list="menuList" language="he" />
     <q-page-container>
-      <q-page class="items-center">
+      <q-page :key="rerender" class="items-center">
         <div class="q-mx-xl q-px-xl q-mt-lg">
           <q-input
             bottom-slots
@@ -110,7 +110,7 @@
                 class="crud-button"
                 name="delete"
                 rounded
-                @click="deleteItem = true"
+                @click="sendDeleteItem(item)"
               />
             </div>
           </div>
@@ -131,18 +131,20 @@
           <q-fab
             color="accent"
             icon="add"
-            direction="up"
+            direction="left"
             class="text-subtitle1 update-button-transition update-button text-bold text-white"
           >
             <q-fab-action
               color="primary"
               @click="addPage = true"
               label="New Page"
+              icon="note_add"
             />
             <q-fab-action
               color="secondary"
               @click="addItem = true"
               label="New Item"
+              icon="add"
             />
           </q-fab>
         </q-page-sticky>
@@ -163,7 +165,12 @@
             label="Key"
             @input="addItemChanged"
             v-model="addItemData.key"
-            :rules="[(val) => !!val || 'Field is required']"
+            :rules="[
+              (val) => !!val || 'Field is required',
+              (val) =>
+                !allData.find((item) => item.key === val) ||
+                'Key already exists',
+            ]"
           />
           <q-select
             class="col-5"
@@ -186,7 +193,12 @@
           />
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <q-input type="textarea" outlined label="Description" />
+          <q-input
+            type="textarea"
+            outlined
+            label="Description"
+            v-model="addItemData.description"
+          />
         </q-card-section>
 
         <q-card-actions align="right">
@@ -194,7 +206,7 @@
             flat
             label="Cancel"
             color="primary"
-            @click="addItemCancel"
+            @click="clearAddItem"
             v-close-popup
           />
           <q-btn
@@ -203,6 +215,7 @@
             color="accent"
             :disabled="!addItemSubmit"
             v-close-popup
+            @click="submitAddItem"
           />
         </q-card-actions> </q-card
     ></q-dialog>
@@ -218,7 +231,12 @@
             label="Key"
             v-model="editItemData.key"
             @input="checkChanges()"
-            :rules="[(val) => !!val || 'Field is required']"
+            :rules="[
+              (val) => !!val || 'Field is required',
+              (val) =>
+                !allData.find((item) => item.key === val) ||
+                'Key already exists',
+            ]"
           />
           <q-select
             class="col-5"
@@ -273,7 +291,13 @@
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="primary" v-close-popup />
-          <q-btn flat label="Delete" color="negative" v-close-popup />
+          <q-btn
+            flat
+            label="Delete"
+            color="negative"
+            v-close-popup
+            @click="destroyItem"
+          />
         </q-card-actions> </q-card
     ></q-dialog>
     <q-dialog persistent v-model="addPage"
@@ -311,6 +335,7 @@ export default {
   components: { MyMenu },
   data() {
     return {
+      rerender: 0,
       scrollOn: false,
       left: false,
       menuList,
@@ -326,6 +351,7 @@ export default {
       editItemData: { translatedText: { en: "" } },
       editItemSubmit: false,
       deleteItem: false,
+      deleteItemKey: "",
       addNewItemPage: "",
       currentKey: "",
       addPage: false,
@@ -342,17 +368,13 @@ export default {
     },
     addItemChanged() {
       // check if all three fields are filled and switch bool
-      if (
+      this.addItemSubmit =
         this.addItemData.key &&
         this.addItemData.translatedText.en &&
-        this.addItemData.page
-      ) {
-        this.addItemSubmit = true;
-      } else {
-        this.addItemSubmit = false;
-      }
+        this.addItemData.page &&
+        !this.allData.find((item) => item.key === this.addItemData.key);
     },
-    addItemCancel() {
+    clearAddItem() {
       this.addItemData = {
         key: null,
         translatedText: {
@@ -362,6 +384,38 @@ export default {
         page: null,
       };
       this.addItemSubmit = false;
+    },
+    async submitAddItem() {
+      try {
+        const res = await this.$axios.post(
+          "/apiV1/admin_new_translation",
+          this.addItemData
+        );
+
+        this.clearAddItem();
+        //TODO: force re-render
+        this.rerender++;
+      } catch (err) {
+        this.serverError(err);
+        return;
+      }
+    },
+    async destroyItem() {
+      try {
+        const res = await this.$axios.delete(
+          "/apiV1/admin_delete_translation",
+          { data: { key: this.deleteItemKey } }
+        );
+        //TODO: force re-render
+        this.rerender++;
+
+        this.$q.notify({
+          message: "Translation Deleted",
+        });
+      } catch (err) {
+        this.serverError(err);
+        return;
+      }
     },
     searchFilter() {
       const s = this.searchText.toLowerCase();
@@ -441,11 +495,19 @@ export default {
       this.currentKey = item.key;
       this.editItemData = JSON.parse(JSON.stringify(item));
     },
-    checkChanges: function () {
+    sendDeleteItem(item) {
+      this.deleteItem = true;
+      this.deleteItemKey = item.key;
+    },
+    checkChanges() {
       const current = JSON.stringify(
         this.currentData.find((item) => item.key === this.editItemData.key)
       );
       const changed = JSON.stringify(this.editItemData);
+      console.log(
+        !this.allData.find((item) => item.key === this.editItemData.key) &&
+          current !== changed
+      );
       this.editItemSubmit = current !== changed;
     },
   },
