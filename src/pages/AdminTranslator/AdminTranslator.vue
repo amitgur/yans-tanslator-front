@@ -123,7 +123,6 @@
                 @click="deleteItem = true"
               />
             </div>
-            <!-- Dialogs -->
           </div>
           <div
             :class="{ hidden: displayData.length > 0 }"
@@ -139,45 +138,82 @@
           </div>
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <q-btn
-            fab
+          <q-fab
             color="accent"
             icon="add"
-            @click="composeItem = true"
+            direction="up"
             class="text-subtitle1 update-button-transition update-button text-bold text-white"
           >
-          </q-btn>
+            <q-fab-action
+              color="primary"
+              @click="addPage = true"
+              label="New Page"
+            />
+            <q-fab-action
+              color="secondary"
+              @click="addItem = true"
+              label="New Item"
+            />
+          </q-fab>
         </q-page-sticky>
       </q-page>
     </q-page-container>
 
     <!-- Dialogs -->
-    <q-dialog persistent v-model="composeItem"
+    <q-dialog persistent v-model="addItem"
       ><q-card class="input-fields q-pa-md">
         <q-card-section>
           <div class="text-h6">Add New Item</div>
         </q-card-section>
 
         <q-card-section class="q-pt-none row justify-between">
-          <q-input class="col-6" outlined label="Key" />
+          <q-input
+            class="col-6"
+            outlined
+            label="Key"
+            @input="addItemChanged"
+            v-model="addItemData.key"
+            :rules="[(val) => !!val || 'Field is required']"
+          />
           <q-select
             class="col-5"
             outlined
             label="Page"
             :options="bandpadLanguagePages"
-            v-model="addNewItemPage"
+            @input="addItemChanged"
+            v-model="addItemData.page"
+            :rules="[(val) => !!val || 'Field is required']"
           />
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <q-input type="textarea" outlined label="English Text" />
+          <q-input
+            type="textarea"
+            outlined
+            label="English Text"
+            @input="addItemChanged"
+            v-model="addItemData.translatedText.en"
+            :rules="[(val) => !!val || 'Field is required']"
+          />
         </q-card-section>
         <q-card-section class="q-pt-none">
           <q-input type="textarea" outlined label="Description" />
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="primary" v-close-popup />
-          <q-btn flat label="Submit" color="accent" v-close-popup />
+          <q-btn
+            flat
+            label="Cancel"
+            color="primary"
+            @click="addItemCancel"
+            v-close-popup
+          />
+          <q-btn
+            flat
+            label="Submit"
+            color="accent"
+            :disabled="!addItemSubmit"
+            v-close-popup
+          />
         </q-card-actions> </q-card
     ></q-dialog>
     <q-dialog persistent v-model="editItem"
@@ -189,9 +225,10 @@
           <q-input
             class="col-6"
             outlined
-            disable
             label="Key"
             v-model="editItemData.key"
+            @input="checkChanges()"
+            :rules="[(val) => !!val || 'Field is required']"
           />
           <q-select
             class="col-5"
@@ -199,6 +236,8 @@
             label="Page"
             :options="bandpadLanguagePages"
             v-model="editItemData.page"
+            @input="checkChanges()"
+            :rules="[(val) => !!val || 'Field is required']"
           />
         </q-card-section>
         <q-card-section class="q-pt-none">
@@ -207,6 +246,8 @@
             outlined
             label="English Text"
             v-model="editItemData.translatedText.en"
+            @input="checkChanges()"
+            :rules="[(val) => !!val || 'Field is required']"
           />
         </q-card-section>
         <q-card-section class="q-pt-none">
@@ -215,12 +256,20 @@
             outlined
             label="Description"
             v-model="editItemData.description"
+            @keyup="checkChanges()"
           />
         </q-card-section>
 
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="primary" v-close-popup />
-          <q-btn flat label="Submit" color="positive" v-close-popup />
+          <q-btn
+            flat
+            label="Submit"
+            color="positive"
+            v-close-popup
+            :disabled="!editItemSubmit"
+            @click="submitChanges"
+          />
         </q-card-actions> </q-card
     ></q-dialog>
     <q-dialog persistent v-model="deleteItem"
@@ -235,6 +284,25 @@
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="primary" v-close-popup />
           <q-btn flat label="Delete" color="negative" v-close-popup />
+        </q-card-actions> </q-card
+    ></q-dialog>
+    <q-dialog persistent v-model="addPage"
+      ><q-card class="q-pa-md">
+        <q-card-section>
+          <div class="text-h6">Add Page</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input outlined label="New Page" v-model="addPageData" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="primary" v-close-popup />
+          <q-btn
+            flat
+            label="Submit"
+            :disabled="addPageData == ''"
+            color="accent"
+            v-close-popup
+          />
         </q-card-actions> </q-card
     ></q-dialog>
   </q-layout>
@@ -258,22 +326,52 @@ export default {
       menuList,
       tab: "",
       allData: [],
-      currentData: [],
       displayData: [],
+      currentData: [],
       searchText: "",
       bandpadLanguagePages,
+
       scrollDown: false,
-      composeItem: false,
       editItem: false,
-      editItemData: {},
+      editItemData: { translatedText: { en: "" } },
+      editItemSubmit: false,
       deleteItem: false,
       addNewItemPage: "",
+      currentKey: "",
+      addPage: false,
+      addPageData: "",
+      addItem: false,
+      addItemData: {},
+      addItemSubmit: false,
     };
   },
 
   methods: {
     pageFilter(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
+    },
+    addItemChanged() {
+      // check if all three fields are filled and switch bool
+      if (
+        this.addItemData.key &&
+        this.addItemData.translatedText.en &&
+        this.addItemData.page
+      ) {
+        this.addItemSubmit = true;
+      } else {
+        this.addItemSubmit = false;
+      }
+    },
+    addItemCancel() {
+      this.addItemData = {
+        key: null,
+        translatedText: {
+          en: null,
+        },
+        description: "",
+        page: null,
+      };
+      this.addItemSubmit = false;
     },
     searchFilter() {
       const s = this.searchText.toLowerCase();
@@ -309,24 +407,64 @@ export default {
         this.scrollDown = false;
       }
     },
-    async compose() {
-      console.log("test");
+    async submitChanges() {
+      const sendData = {
+        currentKey: this.currentKey,
+        data: this.editItemData,
+      };
+
+      let res;
+      try {
+        res = await this.$axios.post("/apiV1/admin_edit_translation", sendData);
+      } catch (err) {
+        this.serverError(err);
+        return;
+      }
+
+      // fix currentData and allData on update
+      this.fixData(this.currentData);
+      this.fixData(this.allData);
+
+      this.$q.notify({
+        message: "Translation Updated",
+      });
+    },
+    fixData(arrData) {
+      const updateDataObject = this.arrData.find(
+        (item) => item.key === this.currentKey
+      );
+      Object.assign(
+        updateDataObject,
+        JSON.parse(JSON.stringify(this.editItemData))
+      );
     },
     noMatches() {
-      if (this.displayData.length == 0) {
+      if (!this.displayData.length) {
         this.$refs["loader"].classList.add("hidden");
         this.$refs["no-matches"].classList.remove("hidden");
       }
     },
     loadMatches() {
-      if (this.displayData.length == 0) {
+      if (!this.displayData.length) {
         this.$refs["loader"].classList.remove("hidden");
         this.$refs["no-matches"].classList.add("hidden");
       }
     },
     sendItem(item) {
       this.editItem = true;
-      this.editItemData = item;
+      this.currentKey = item.key;
+      this.editItemData = JSON.parse(JSON.stringify(item));
+    },
+    checkChanges() {
+      const current = JSON.stringify(
+        this.currentData.find((item) => item.key === this.editItemData.key)
+      );
+      const changed = JSON.stringify(this.editItemData);
+      if (current != changed) {
+        this.editItemSubmit = true;
+      } else {
+        this.editItemSubmit = false;
+      }
     },
   },
   computed: {
@@ -335,10 +473,19 @@ export default {
   async created() {
     const firstTab = this.bandpadLanguagePages[0];
     this.tab = firstTab;
+    this.addItemData = {
+      key: null,
+      translatedText: {
+        en: null,
+      },
+      description: "",
+      page: null,
+    };
     try {
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
-      this.editItemData = this.allData[0];
+      this.editItemData = JSON.parse(JSON.stringify(this.allData[0]));
+      this.currentKey = this.editItemData.key;
 
       this.allData.forEach((item) => {
         const clone = JSON.parse(JSON.stringify(item));
