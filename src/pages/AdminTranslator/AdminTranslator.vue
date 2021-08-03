@@ -3,8 +3,8 @@
     <q-scroll-observer @scroll="onTranslatorScroll" />
     <my-menu :menu-list="menuList" language="he" />
     <q-page-container>
-      <q-page :key="rerender" class="items-center">
-        <div class="q-mx-xl q-px-xl q-mt-lg">
+      <q-page class="items-center">
+        <div class="q-mx-xl q-px-xl q-my-lg">
           <q-input
             bottom-slots
             v-model="searchText"
@@ -36,14 +36,39 @@
                 class="bg-primary text-white"
                 v-model="tab"
                 align="justify"
+                inline-label
               >
                 <q-tab
-                  v-for="page in bandpadLanguagePages"
+                  v-for="page in filterPages"
                   :key="page"
                   :name="page"
                   :label="page"
                   @click="pageFilter(page)"
-                />
+                >
+                  <q-btn-dropdown class="tab-dropdown" size="sm" unelevated>
+                    <q-list>
+                      <q-item
+                        clickable
+                        v-close-popup
+                        @click="deletePageAllow(page)"
+                      >
+                        <q-item-section>
+                          <q-item-label>Delete </q-item-label>
+                        </q-item-section>
+                      </q-item>
+
+                      <q-item
+                        clickable
+                        v-close-popup
+                        @click="renamePageAllow(page)"
+                      >
+                        <q-item-section>
+                          <q-item-label>Rename</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-btn-dropdown>
+                </q-tab>
               </q-tabs>
             </q-card>
           </div>
@@ -53,7 +78,7 @@
               class="row justify-center items-center q-py-xs q-my-sm bg-blue-grey-9 text-white text-bold text-h6"
               style="border-radius: 0.4em"
             >
-              <div class="col-2">
+              <div class="col-3">
                 <div class="q-px-lg q-py-md q-mx-md">
                   <div>Key</div>
                 </div>
@@ -61,7 +86,7 @@
               <div class="col-5">
                 <div class="q-px-lg q-py-md q-mx-md">Description</div>
               </div>
-              <div class="col-3">
+              <div class="col-2">
                 <div class="q-px-lg q-py-md q-mx-md">Already Translated</div>
               </div>
               <div class="col-1" style="text-align: center">Edit</div>
@@ -75,7 +100,7 @@
             style="border-radius: 0.4em"
           >
             <!-- source text -->
-            <div class="col-2">
+            <div class="col-3">
               <div class="q-px-lg q-py-md q-mx-md">
                 <div>
                   {{ item.key }}
@@ -90,7 +115,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-3">
+            <div class="col-2">
               <div class="q-px-lg q-py-md q-mx-md">
                 <div class="text-italic">
                   {{ Object.keys(item.translatedText).join(", ") }}
@@ -148,6 +173,7 @@
             />
           </q-fab>
         </q-page-sticky>
+        <div class="q-ma-xl" style="height:10px"></div>
       </q-page>
     </q-page-container>
 
@@ -176,7 +202,7 @@
             class="col-5"
             outlined
             label="Page"
-            :options="bandpadLanguagePages"
+            :options="filterPages"
             @input="addItemChanged"
             v-model="addItemData.page"
             :rules="[(val) => !!val || 'Field is required']"
@@ -242,7 +268,7 @@
             class="col-5"
             outlined
             label="Page"
-            :options="bandpadLanguagePages"
+            :options="filterPages"
             v-model="editItemData.page"
             @input="checkChanges()"
             :rules="[(val) => !!val || 'Field is required']"
@@ -301,21 +327,119 @@
         </q-card-actions> </q-card
     ></q-dialog>
     <q-dialog persistent v-model="addPage"
-      ><q-card class="q-pa-md">
+      ><q-card class="q-pa-md input-fields-sm">
         <q-card-section>
           <div class="text-h6">Add Page</div>
         </q-card-section>
         <q-card-section>
-          <q-input outlined label="New Page" v-model="addPageData" />
+          <q-input
+            outlined
+            label="New Page"
+            v-model="addPageData"
+            :rules="[
+              (val) =>
+                !filterPages.find(
+                  (e) => e.toLowerCase() === val.toLowerCase()
+                ) || 'Page already exists',
+            ]"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn
+            flat
+            label="Cancel"
+            color="primary"
+            v-close-popup
+            @click="clearPage"
+          />
+          <q-btn
+            flat
+            label="Submit"
+            :disabled="
+              addPageData === '' ||
+                !!filterPages.find(
+                  (e) => e.toLowerCase() === addPageData.toLowerCase()
+                )
+            "
+            color="accent"
+            v-close-popup
+            @click="addNewPage"
+          />
+        </q-card-actions> </q-card
+    ></q-dialog>
+    <q-dialog persistent v-model="deletePage"
+      ><q-card class="input-fields q-pa-md">
+        <q-card-section>
+          <div class="text-h6">Delete Page</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          Are you sure you want to delete?
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="primary" v-close-popup />
           <q-btn
             flat
+            label="Delete"
+            color="negative"
+            v-close-popup
+            @click="destroyPage"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <q-dialog persistent v-model="deletePageNotAllowed"
+      ><q-card class="input-fields q-pa-md">
+        <q-card-section>
+          <div class="text-h6">Attention</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          This page is not empty. You cannot delete.
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="OK" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <q-dialog persistent v-model="renamePage"
+      ><q-card class="q-pa-md input-fields-sm">
+        <q-card-section>
+          <div class="text-h6">Rename Page</div>
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            outlined
+            label="New Page Name"
+            v-model="renamePageData"
+            :rules="[
+              (val) =>
+                !filterPages.find(
+                  (e) => e.toLowerCase() === val.toLowerCase()
+                ) || 'Page already exists',
+            ]"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn
+            flat
+            label="Cancel"
+            color="primary"
+            v-close-popup
+            @click="clearPage"
+          />
+          <q-btn
+            flat
             label="Submit"
-            :disabled="addPageData === ''"
+            :disabled="
+              renamePageData === '' ||
+                !!filterPages.find(
+                  (e) => e.toLowerCase() === renamePageData.toLowerCase()
+                )
+            "
             color="accent"
             v-close-popup
+            @click="changePageName()"
           />
         </q-card-actions> </q-card
     ></q-dialog>
@@ -326,7 +450,7 @@
 import MyMenu from "components/MyMenu";
 import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
-import bandpadLanguagePages from "pages/languagePages";
+
 import { mapState } from "vuex";
 
 export default {
@@ -335,7 +459,6 @@ export default {
   components: { MyMenu },
   data() {
     return {
-      rerender: 0,
       scrollOn: false,
       left: false,
       menuList,
@@ -344,7 +467,7 @@ export default {
       displayData: [],
       currentData: [],
       searchText: "",
-      bandpadLanguagePages,
+      filterPages: [],
 
       scrollDown: false,
       editItem: false,
@@ -359,12 +482,18 @@ export default {
       addItem: false,
       addItemData: {},
       addItemSubmit: false,
+      deletePage: false,
+      deletePageData: "",
+      deletePageNotAllowed: false,
+      renamePage: false,
+      renamePageData: "",
     };
   },
 
   methods: {
     pageFilter(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
+      this.noMatches();
     },
     addItemChanged() {
       // check if all three fields are filled and switch bool
@@ -385,20 +514,31 @@ export default {
       };
       this.addItemSubmit = false;
     },
+    clearPage() {
+      this.addPageData = "";
+      this.renamePageData = "";
+      this.deletePageData = "";
+    },
     async submitAddItem() {
       try {
         const res = await this.$axios.post(
           "/apiV1/admin_new_translation",
           this.addItemData
         );
+        this.allData.push(this.addItemData);
+        this.currentData.push(this.addItemData);
+        this.pageFilter(this.tab);
 
         this.clearAddItem();
-        //TODO: force re-render
-        this.rerender++;
       } catch (err) {
         this.serverError(err);
         return;
       }
+    },
+    deleteOneFromArray(arrData, key) {
+      const i = arrData.findIndex((e) => e.key === key);
+      console.log(i);
+      arrData.splice(i, 1);
     },
     async destroyItem() {
       try {
@@ -406,8 +546,10 @@ export default {
           "/apiV1/admin_delete_translation",
           { data: { key: this.deleteItemKey } }
         );
-        //TODO: force re-render
-        this.rerender++;
+
+        this.deleteOneFromArray(this.allData, this.deleteItemKey);
+        this.deleteOneFromArray(this.currentData, this.deleteItemKey);
+        this.pageFilter(this.tab);
 
         this.$q.notify({
           message: "Translation Deleted",
@@ -417,6 +559,74 @@ export default {
         return;
       }
     },
+    async addNewPage() {
+      try {
+        this.filterPages.push(this.addPageData);
+        const res = await this.$axios.post("/apiV1/update_pages", {
+          newPages: this.filterPages,
+        });
+        this.clearPage();
+      } catch (err) {
+        this.clearPage();
+        this.serverError(err);
+        return;
+      }
+    },
+    deletePageAllow(page) {
+      const checkData = this.allData.filter((e) => e.page === page);
+      this.deletePageData = page;
+      if (!checkData.length) {
+        this.deletePage = true;
+      } else {
+        this.deletePageNotAllowed = true;
+      }
+    },
+    async destroyPage() {
+      if (this.deletePage) {
+        try {
+          const i = this.filterPages.indexOf(this.deletePageData);
+          this.filterPages.splice(i, 1);
+          this.tab = this.filterPages[0];
+          this.pageFilter(this.tab);
+
+          const res = await this.$axios.post("/apiV1/update_pages", {
+            newPages: this.filterPages,
+          });
+          this.clearPage();
+        } catch (err) {
+          this.serverError(err);
+          return;
+        }
+      }
+    },
+    renamePageAllow(page) {
+      this.renamePage = true;
+      this.deletePageData = page;
+    },
+    async changePageName() {
+      try {
+        const i = this.filterPages.indexOf(this.deletePageData);
+        this.filterPages.splice(i, 1, this.renamePageData);
+        this.tab = this.filterPages[0];
+        this.pageFilter(this.tab);
+
+        const res = await this.$axios.post("/apiV1/update_pages", {
+          newPages: this.filterPages,
+        });
+
+        // Also change all pages for all translation in page
+        const res2 = await this.$axios.post("/apiV1/admin_update_page_name", {
+          oldPageName: this.deletePageData,
+          newPageName: this.renamePageData,
+        });
+
+        this.clearPage();
+      } catch (err) {
+        this.serverError(err);
+        return;
+      }
+    },
+
     searchFilter() {
       const s = this.searchText.toLowerCase();
       // default to tab if search is empty
@@ -515,8 +725,7 @@ export default {
     ...mapState("Auth", ["user"]),
   },
   async created() {
-    const firstTab = this.bandpadLanguagePages[0];
-    this.tab = firstTab;
+    let firstTab;
     this.addItemData = {
       key: null,
       translatedText: {
@@ -526,6 +735,11 @@ export default {
       page: null,
     };
     try {
+      const pages = await this.$axios.get("/apiV1/get_pages");
+      this.filterPages = pages.data.list;
+      firstTab = this.filterPages[0];
+      this.tab = firstTab;
+
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
       this.editItemData = JSON.parse(JSON.stringify(this.allData[0]));
@@ -611,6 +825,10 @@ export default {
 
 .input-fields {
   width: 25em;
+}
+
+.input-fields-sm {
+  width: 15em;
 }
 
 @keyframes spin {

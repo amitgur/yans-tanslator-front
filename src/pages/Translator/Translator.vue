@@ -38,12 +38,18 @@
                 align="justify"
               >
                 <q-tab
-                  v-for="page in bandpadLanguagePages"
+                  v-for="page in filterPages"
                   :key="page"
                   :name="page"
                   :label="page"
                   @click="pageFilter(page)"
                 />
+                <q-tab
+                  class="bg-blue text-subtitle2"
+                  @click="incompleteFilter()"
+                >
+                  Incompletes
+                </q-tab>
               </q-tabs>
             </q-card>
           </div>
@@ -59,9 +65,8 @@
               <!-- source text -->
               <div class="col-4">
                 <div class="q-px-lg q-py-md q-mx-md">
-                  <!-- TODO: This should be the language translating from, not the TEXT -->
                   <div class="text-italic">
-                    {{ item.translatedText[user.languageFrom] }}
+                    {{ currentFromText(item.key) }}
                   </div>
                 </div>
               </div>
@@ -153,7 +158,6 @@
 import MyMenu from "components/MyMenu";
 import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
-import bandpadLanguagePages from "pages/languagePages";
 import { mapState } from "vuex";
 
 export default {
@@ -170,7 +174,7 @@ export default {
       currentData: [],
       displayData: [],
       searchText: "",
-      bandpadLanguagePages,
+      filterPages: [],
       changedData: new Map(),
       changedDataSize: 0,
       scrollDown: false,
@@ -178,9 +182,34 @@ export default {
   },
 
   methods: {
+    // -- CRUD ---------------
+
+    // -- Input Handling ----
+
+    /**
+     * Takes a page name and sets displayData
+     */
     pageFilter(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
     },
+
+    /**
+     * Filters through displayData and displays incompleted
+     */
+    incompleteFilter() {
+      this.displayData = this.allData.filter(
+        (e) =>
+          e.translatedText[this.user.languageTo] === "" ||
+          e.translatedText[this.user.languageTo] === undefined
+      );
+
+      this.noMatches();
+    },
+
+    /**
+     * set displayData based on search
+     * also hides tabs
+     */
     searchFilter() {
       const s = this.searchText.toLowerCase();
       // default to tab if search is empty
@@ -208,18 +237,23 @@ export default {
       // no match output
       this.noMatches();
     },
-    onTranslatorScroll(info) {
-      if (info.direction == "down") {
-        this.scrollDown = true;
-      } else {
-        this.scrollDown = false;
-      }
+
+    /**
+     * returns unmodified languageFrom text value
+     */
+    currentFromText(key) {
+      const staticClone = this.currentData.find((e) => e.key === key)
+        .translatedText[this.user.languageFrom];
+      return staticClone;
     },
+
+    /**
+     * takes current key and input text changes and tracks them
+     * if changes return to original state, item is removed from tracking
+     */
     storeChanges(key, changes) {
       const current = this.currentData.find((item) => item.key === key)
         .translatedText[this.user.languageTo];
-      // TODO: monitor last translation changes/when to change last translation
-      // should happen in the updateTranslation() call
       if (changes === current) {
         // check and remove from Map
         this.changedData.delete(key);
@@ -230,6 +264,20 @@ export default {
         this.changedDataSize = this.changedData.size;
       }
     },
+
+    // -- Other --------------
+
+    /**
+     * used for scroll watching
+     */
+    onTranslatorScroll(info) {
+      if (info.direction == "down") {
+        this.scrollDown = true;
+      } else {
+        this.scrollDown = false;
+      }
+    },
+
     async updateTranslation() {
       if (this.changedDataSize > 0) {
         const res = await this.$axios.post(
@@ -252,6 +300,9 @@ export default {
         this.changedDataSize = this.changedData.size;
       }
     },
+    /**
+     * Displays no match screen if search does not find anything to match
+     */
     noMatches() {
       if (this.displayData.length == 0) {
         this.$refs["loader"].classList.add("hidden");
@@ -269,9 +320,13 @@ export default {
     ...mapState("Auth", ["user"]),
   },
   async created() {
-    const firstTab = "site";
-    this.tab = firstTab;
+    let firstTab;
     try {
+      const pages = await this.$axios.get("/apiV1/get_pages");
+      this.filterPages = pages.data.list;
+      firstTab = this.filterPages[0];
+      this.tab = firstTab;
+
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
 
@@ -279,6 +334,8 @@ export default {
         const clone = JSON.parse(JSON.stringify(item));
         this.currentData.push(clone);
       });
+
+      console.log(this.currentData);
 
       this.pageFilter(firstTab);
     } catch (err) {

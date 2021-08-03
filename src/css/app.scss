@@ -1,1 +1,13 @@
 // app global css in Sass form
+
+.tab-dropdown > .q-btn__wrapper {
+  padding: 0 !important;
+  & > .q-btn__content {
+    height: 1rem !important;
+  }
+}
+
+.tab-dropdown {
+  margin-left: 0.5rem;
+  height: 1rem;
+}

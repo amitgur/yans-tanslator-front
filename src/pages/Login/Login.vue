@@ -90,13 +90,6 @@ export default {
   computed: {
     ...mapState("Auth", ["isSignIn"]),
   },
-  // mounted() {
-  //   window.addEventListener("keyup", (e) => {
-  //     if (e.code === "Enter") {
-  //       this.login();
-  //     }
-  //   });
-  // },
   created() {
     if (this.isSignIn) {
       this.$router.push("/");
