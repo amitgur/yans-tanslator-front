@@ -1,9 +1,9 @@
 <template>
   <div
-    class="column justify-center items-center content-center full-width full-height bg-blue-grey-2"
+    class="column q-pa-xl justify-center items-center content-center full-width bg-blue-grey-2"
   >
     <div class="column">
-      <h3 class="text-center q-mt-xs">Sign Up</h3>
+      <h3 class="text-center q-mt-xl q-pt-xl">Sign Up</h3>
       <q-card square bordered class="q-pa-lg shadow-1 signup">
         <q-card-section>
           <q-form class="q-gutter-md">
@@ -31,10 +31,18 @@
               filled
               clearable
               v-model="password"
-              type="password"
+              :type="isPwd ? 'password' : 'text'"
               label="Password"
               :rules="[(val) => !!val || 'Field is required']"
-            />
+            >
+              <template v-slot:append>
+                <q-icon
+                  :name="isPwd ? 'visibility_off' : 'visibility'"
+                  class="cursor-pointer"
+                  @click="isPwd = !isPwd"
+                />
+              </template>
+            </q-input>
             <p class="hint">Select language to translate to</p>
             <q-select
               filled
@@ -81,6 +89,7 @@ export default {
       password: null,
       name: null,
       secretWord: null,
+      isPwd: true,
       languageTo: languageList[0],
       languageList,
     };
@@ -152,5 +161,8 @@ export default {
 }
 .hint {
   opacity: 0.5;
+}
+body {
+  margin: 10em;
 }
 </style>

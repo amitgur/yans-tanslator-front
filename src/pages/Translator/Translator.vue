@@ -5,6 +5,7 @@
     <q-page-container>
       <q-page class="items-center">
         <div class="q-mx-xl q-px-xl q-mt-lg">
+          <!-- search bar -->
           <q-input
             bottom-slots
             v-model="searchText"
@@ -26,7 +27,7 @@
             </template>
           </q-input>
 
-          <!-- tabs -page selector -->
+          <!-- tabs-page selector -->
           <div
             :class="{ hidden: searchText != '' }"
             style="transition: all 0.5s"
@@ -38,16 +39,14 @@
                 align="justify"
               >
                 <q-tab
-                  v-for="page in filterPages"
+                  v-for="page in filteredData"
                   :key="page"
                   :name="page"
                   :label="page"
-                  @click="pageFilter(page)"
+                  @click="setDisplayData(page)"
                 />
-                <q-tab
-                  class="bg-blue text-subtitle2"
-                  @click="incompleteFilter()"
-                >
+                <!-- filter incomplete fields -->
+                <q-tab class="bg-blue text-subtitle2" @click="incompleteFilter">
                   Incompletes
                 </q-tab>
               </q-tabs>
@@ -62,7 +61,7 @@
               class="row justify-center items-center q-py-md q-my-sm bg-blue-grey-1"
               style="border-radius: 0.4em"
             >
-              <!-- source text -->
+              <!-- language from text -->
               <div class="col-4">
                 <div class="q-px-lg q-py-md q-mx-md">
                   <div class="text-italic">
@@ -70,6 +69,7 @@
                   </div>
                 </div>
               </div>
+              <!-- translation input field -->
               <div class="col-6">
                 <q-input
                   outlined
@@ -167,29 +167,55 @@ export default {
   data() {
     return {
       scrollOn: false,
-      left: false,
+      scrollDown: false,
       menuList,
       tab: "",
       allData: [],
       currentData: [],
       displayData: [],
-      searchText: "",
-      filterPages: [],
+      filteredData: [],
       changedData: new Map(),
       changedDataSize: 0,
-      scrollDown: false,
+      searchText: "",
     };
   },
 
   methods: {
-    // -- CRUD ---------------
+    // -- CRUD -------------------------------------
 
-    // -- Input Handling ----
+    /**
+     * Handling sending updated translations to back end
+     * checks this.changedData
+     */
+    async updateTranslation() {
+      if (this.changedDataSize > 0) {
+        const res = await this.$axios.post(
+          "/apiV1/update_translations",
+          Object.fromEntries(this.changedData)
+        );
+
+        this.$q.notify({
+          message: "Updated Translations",
+        });
+        // fix currentData on update
+        for (const [key, value] of this.changedData) {
+          const updateDataObject = this.currentData.find(
+            (item) => item.key === key
+          );
+          updateDataObject.translatedText[this.user.languageTo] = value;
+        }
+
+        this.changedData.clear();
+        this.changedDataSize = this.changedData.size;
+      }
+    },
+
+    // -- Input Handling ---------------------------
 
     /**
      * Takes a page name and sets displayData
      */
-    pageFilter(filterString) {
+    setDisplayData(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
     },
 
@@ -214,7 +240,7 @@ export default {
       const s = this.searchText.toLowerCase();
       // default to tab if search is empty
       if (s == "") {
-        this.pageFilter(this.tab);
+        this.setDisplayData(this.tab);
         return;
       }
       // search page, key, and translatedText.
@@ -265,7 +291,7 @@ export default {
       }
     },
 
-    // -- Other --------------
+    // -- Other ------------------------------------
 
     /**
      * used for scroll watching
@@ -278,28 +304,6 @@ export default {
       }
     },
 
-    async updateTranslation() {
-      if (this.changedDataSize > 0) {
-        const res = await this.$axios.post(
-          "/apiV1/update_translations",
-          Object.fromEntries(this.changedData)
-        );
-
-        this.$q.notify({
-          message: "Updated Translations",
-        });
-        // fix currentData on update
-        for (const [key, value] of this.changedData) {
-          const updateDataObject = this.currentData.find(
-            (item) => item.key === key
-          );
-          updateDataObject.translatedText[this.user.languageTo] = value;
-        }
-
-        this.changedData.clear();
-        this.changedDataSize = this.changedData.size;
-      }
-    },
     /**
      * Displays no match screen if search does not find anything to match
      */
@@ -309,6 +313,10 @@ export default {
         this.$refs["no-matches"].classList.remove("hidden");
       }
     },
+
+    /**
+     * Loading animation to show feedback while waiting for match generation
+     */
     loadMatches() {
       if (this.displayData.length == 0) {
         this.$refs["loader"].classList.remove("hidden");
@@ -322,22 +330,24 @@ export default {
   async created() {
     let firstTab;
     try {
+      // setting page tab values from backend
       const pages = await this.$axios.get("/apiV1/get_pages");
-      this.filterPages = pages.data.list;
-      firstTab = this.filterPages[0];
+      this.filteredData = pages.data.list;
+      firstTab = this.filteredData[0];
       this.tab = firstTab;
 
+      // grabbing translations from backend
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
 
+      // deep clone of data for change tracking
       this.allData.forEach((item) => {
         const clone = JSON.parse(JSON.stringify(item));
         this.currentData.push(clone);
       });
 
-      console.log(this.currentData);
-
-      this.pageFilter(firstTab);
+      // filter for first load
+      this.setDisplayData(firstTab);
     } catch (err) {
       this.serverError(err);
     }

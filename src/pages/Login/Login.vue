@@ -21,10 +21,18 @@
               filled
               clearable
               v-model="password"
-              type="password"
+              :type="isPwd ? 'password' : 'text'"
               label="Password"
               :rules="[(val) => !!val || 'Field is required']"
-            />
+            >
+              <template v-slot:append>
+                <q-icon
+                  :name="isPwd ? 'visibility_off' : 'visibility'"
+                  class="cursor-pointer"
+                  @click="isPwd = !isPwd"
+                />
+              </template>
+            </q-input>
             <q-toggle v-model="rememberMe" label="Remember Me"></q-toggle>
           </q-form>
         </q-card-section>
@@ -59,6 +67,7 @@ export default {
       username: null,
       password: null,
       rememberMe: false,
+      isPwd: true,
     };
   },
   methods: {

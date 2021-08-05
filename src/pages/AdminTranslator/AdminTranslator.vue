@@ -39,11 +39,11 @@
                 inline-label
               >
                 <q-tab
-                  v-for="page in filterPages"
+                  v-for="page in filteredData"
                   :key="page"
                   :name="page"
                   :label="page"
-                  @click="pageFilter(page)"
+                  @click="setDisplayData(page)"
                 >
                   <q-btn-dropdown class="tab-dropdown" size="sm" unelevated>
                     <q-list>
@@ -202,7 +202,7 @@
             class="col-5"
             outlined
             label="Page"
-            :options="filterPages"
+            :options="filteredData"
             @input="addItemChanged"
             v-model="addItemData.page"
             :rules="[(val) => !!val || 'Field is required']"
@@ -268,7 +268,7 @@
             class="col-5"
             outlined
             label="Page"
-            :options="filterPages"
+            :options="filteredData"
             v-model="editItemData.page"
             @input="checkChanges()"
             :rules="[(val) => !!val || 'Field is required']"
@@ -338,7 +338,7 @@
             v-model="addPageData"
             :rules="[
               (val) =>
-                !filterPages.find(
+                !filteredData.find(
                   (e) => e.toLowerCase() === val.toLowerCase()
                 ) || 'Page already exists',
             ]"
@@ -414,7 +414,7 @@
             v-model="renamePageData"
             :rules="[
               (val) =>
-                !filterPages.find(
+                !filteredData.find(
                   (e) => e.toLowerCase() === val.toLowerCase()
                 ) || 'Page already exists',
             ]"
@@ -433,7 +433,7 @@
             label="Submit"
             :disabled="
               renamePageData === '' ||
-              !!filterPages.find(
+              !!filteredData.find(
                 (e) => e.toLowerCase() === renamePageData.toLowerCase()
               )
             "
@@ -460,27 +460,33 @@ export default {
   data() {
     return {
       scrollOn: false,
-      left: false,
+      scrollDown: false,
       menuList,
       tab: "",
       allData: [],
       displayData: [],
       currentData: [],
+      filteredData: [],
+      currentKey: "",
       searchText: "",
-      filterPages: [],
 
-      scrollDown: false,
       editItem: false,
       editItemData: { translatedText: { en: "" } },
       editItemSubmit: false,
       deleteItem: false,
       deleteItemKey: "",
       addNewItemPage: "",
-      currentKey: "",
       addPage: false,
       addPageData: "",
       addItem: false,
-      addItemData: {},
+      addItemData: {
+        key: null,
+        translatedText: {
+          en: null,
+        },
+        description: "",
+        page: null,
+      },
       addItemSubmit: false,
       deletePage: false,
       deletePageData: "",
@@ -491,172 +497,11 @@ export default {
   },
 
   methods: {
-    pageFilter(filterString) {
-      this.displayData = this.allData.filter((e) => e.page === filterString);
-      this.noMatches();
-    },
-    addItemChanged() {
-      // check if all three fields are filled and switch bool
-      this.addItemSubmit =
-        this.addItemData.key &&
-        this.addItemData.translatedText.en &&
-        this.addItemData.page &&
-        !this.allData.find((item) => item.key === this.addItemData.key);
-    },
-    clearAddItem() {
-      this.addItemData = {
-        key: null,
-        translatedText: {
-          en: null,
-        },
-        description: "",
-        page: null,
-      };
-      this.addItemSubmit = false;
-    },
-    clearPage() {
-      this.addPageData = "";
-      this.renamePageData = "";
-      this.deletePageData = "";
-    },
-    async submitAddItem() {
-      try {
-        const res = await this.$axios.post(
-          "/apiV1/admin_new_translation",
-          this.addItemData
-        );
-        this.allData.push(this.addItemData);
-        this.currentData.push(this.addItemData);
-        this.pageFilter(this.tab);
+    // -- CRUD -------------------------------------
 
-        this.clearAddItem();
-      } catch (err) {
-        this.serverError(err);
-        return;
-      }
-    },
-    deleteOneFromArray(arrData, key) {
-      const i = arrData.findIndex((e) => e.key === key);
-      console.log(i);
-      arrData.splice(i, 1);
-    },
-    async destroyItem() {
-      try {
-        const res = await this.$axios.delete(
-          "/apiV1/admin_delete_translation",
-          { data: { key: this.deleteItemKey } }
-        );
-
-        this.deleteOneFromArray(this.allData, this.deleteItemKey);
-        this.deleteOneFromArray(this.currentData, this.deleteItemKey);
-        this.pageFilter(this.tab);
-
-        this.$q.notify({
-          message: "Translation Deleted",
-        });
-      } catch (err) {
-        this.serverError(err);
-        return;
-      }
-    },
-    async addNewPage() {
-      try {
-        this.filterPages.push(this.addPageData);
-        const res = await this.$axios.post("/apiV1/update_pages", {
-          newPages: this.filterPages,
-        });
-        this.clearPage();
-      } catch (err) {
-        this.clearPage();
-        this.serverError(err);
-        return;
-      }
-    },
-    deletePageAllow(page) {
-      const checkData = this.allData.filter((e) => e.page === page);
-      this.deletePageData = page;
-      if (!checkData.length) {
-        this.deletePage = true;
-      } else {
-        this.deletePageNotAllowed = true;
-      }
-    },
-    async destroyPage() {
-      if (this.deletePage) {
-        try {
-          const i = this.filterPages.indexOf(this.deletePageData);
-          this.filterPages.splice(i, 1);
-          this.tab = this.filterPages[0];
-          this.pageFilter(this.tab);
-
-          const res = await this.$axios.post("/apiV1/update_pages", {
-            newPages: this.filterPages,
-          });
-          this.clearPage();
-        } catch (err) {
-          this.serverError(err);
-          return;
-        }
-      }
-    },
-    renamePageAllow(page) {
-      this.renamePage = true;
-      this.deletePageData = page;
-    },
-    async changePageName() {
-      try {
-        const i = this.filterPages.indexOf(this.deletePageData);
-        this.filterPages.splice(i, 1, this.renamePageData);
-        this.tab = this.filterPages[0];
-        this.pageFilter(this.tab);
-
-        const res = await this.$axios.post("/apiV1/update_pages", {
-          newPages: this.filterPages,
-        });
-
-        // Also change all pages for all translation in page
-        const res2 = await this.$axios.post("/apiV1/admin_update_page_name", {
-          oldPageName: this.deletePageData,
-          newPageName: this.renamePageData,
-        });
-
-        this.clearPage();
-      } catch (err) {
-        this.serverError(err);
-        return;
-      }
-    },
-
-    searchFilter() {
-      const s = this.searchText.toLowerCase();
-      // default to tab if search is empty
-      if (s === "") {
-        this.pageFilter(this.tab);
-        return;
-      }
-
-      // search page, key, and translatedText.
-      this.displayData = this.allData.filter(
-        (e) =>
-          e.page.toLowerCase() === s ||
-          e.key.toLowerCase() === s ||
-          e.translatedText[this.user.languageTo]?.toLowerCase() === s ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase() === s ||
-          e.page.toLowerCase().includes(s) ||
-          e.key.toLowerCase().includes(s) ||
-          e.translatedText[this.user.languageTo]?.toLowerCase().includes(s) ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase().includes(s)
-      );
-
-      // loading animation
-      // this.loadMatches();
-
-      // no match output
-      this.noMatches();
-    },
-    onTranslatorScroll(info) {
-      this.scrollDown = info.direction === "down";
-    },
+    /**
+     * Send data edit to backend
+     */
     async submitChanges() {
       const sendData = {
         currentKey: this.currentKey,
@@ -679,6 +524,235 @@ export default {
         message: "Translation Updated",
       });
     },
+
+    /**
+     * deleting entire item from database
+     * this is permanent
+     */
+    async destroyItem() {
+      try {
+        const res = await this.$axios.delete(
+          "/apiV1/admin_delete_translation",
+          { data: { key: this.deleteItemKey } }
+        );
+
+        this.deleteOneFromArray(this.allData, this.deleteItemKey);
+        this.deleteOneFromArray(this.currentData, this.deleteItemKey);
+        this.setDisplayData(this.tab);
+
+        this.$q.notify({
+          message: "Translation Deleted",
+        });
+      } catch (err) {
+        this.serverError(err);
+        return;
+      }
+    },
+
+    /**
+     * sending new translation item to backend
+     */
+    async submitAddItem() {
+      try {
+        const res = await this.$axios.post(
+          "/apiV1/admin_new_translation",
+          this.addItemData
+        );
+        this.allData.push(this.addItemData);
+        this.currentData.push(this.addItemData);
+        this.setDisplayData(this.tab);
+
+        this.clearAddItem();
+      } catch (err) {
+        this.serverError(err);
+        return;
+      }
+    },
+
+    /**
+     * creates new page filter
+     */
+    async addNewPage() {
+      try {
+        this.filteredData.push(this.addPageData);
+        const res = await this.$axios.post("/apiV1/update_pages", {
+          newPages: this.filteredData,
+        });
+        this.clearPage();
+      } catch (err) {
+        this.clearPage();
+        this.serverError(err);
+        return;
+      }
+    },
+
+    /**
+     * deletes page filter
+     * only allowed if page filter has no entries
+     */
+    async destroyPage() {
+      if (this.deletePage) {
+        try {
+          const i = this.filteredData.indexOf(this.deletePageData);
+          this.filteredData.splice(i, 1);
+          this.tab = this.filteredData[0];
+          this.setDisplayData(this.tab);
+
+          const res = await this.$axios.post("/apiV1/update_pages", {
+            newPages: this.filteredData,
+          });
+          this.clearPage();
+        } catch (err) {
+          this.serverError(err);
+          return;
+        }
+      }
+    },
+
+    /**
+     * renames page and all translations in page
+     */
+    async changePageName() {
+      try {
+        const i = this.filteredData.indexOf(this.deletePageData);
+        this.filteredData.splice(i, 1, this.renamePageData);
+        this.tab = this.filteredData[0];
+        this.setDisplayData(this.tab);
+
+        const res = await this.$axios.post("/apiV1/update_pages", {
+          newPages: this.filteredData,
+        });
+
+        // Also change all pages for all translation in page
+        const res2 = await this.$axios.post("/apiV1/admin_update_page_name", {
+          oldPageName: this.deletePageData,
+          newPageName: this.renamePageData,
+        });
+
+        this.clearPage();
+      } catch (err) {
+        this.serverError(err);
+        return;
+      }
+    },
+
+    // -- Input Handling ---------------------------
+
+    /**
+     * Passes in the current page and displays all the data for the specific page
+     */
+    setDisplayData(filterString) {
+      this.displayData = this.allData.filter((e) => e.page === filterString);
+      this.noMatches();
+    },
+
+    /**
+     * Add new item with all fields filled
+     */
+    addItemChanged() {
+      // check if all three fields are filled and switch bool
+      this.addItemSubmit =
+        this.addItemData.key &&
+        this.addItemData.translatedText.en &&
+        this.addItemData.page &&
+        !this.allData.find((item) => item.key === this.addItemData.key);
+    },
+
+    /**
+     * Clears data from input field upon adding new items
+     */
+    clearAddItem() {
+      this.addItemData = {
+        key: null,
+        translatedText: {
+          en: null,
+        },
+        description: "",
+        page: null,
+      };
+      this.addItemSubmit = false;
+    },
+
+    /**
+     * Clears data from input field in each page component
+     */
+    clearPage() {
+      this.addPageData = "";
+      this.renamePageData = "";
+      this.deletePageData = "";
+    },
+
+    /**
+     * Change boolean value to let user rename the page
+     */
+    renamePageAllow(page) {
+      this.renamePage = true;
+      this.deletePageData = page;
+    },
+
+    // -- Other ------------------------------------
+
+    /**
+     * Updating front end data
+     */
+    deleteOneFromArray(arrData, key) {
+      const i = arrData.findIndex((e) => e.key === key);
+      console.log(i);
+      arrData.splice(i, 1);
+    },
+
+    /**
+     * If the page is empty, allow user to delete
+     */
+    deletePageAllow(page) {
+      const checkData = this.allData.filter((e) => e.page === page);
+      this.deletePageData = page;
+      if (!checkData.length) {
+        this.deletePage = true;
+      } else {
+        this.deletePageNotAllowed = true;
+      }
+    },
+
+    /**
+     * filter display data by searched keyword
+     * checks: page, key, text from, and text to
+     */
+    searchFilter() {
+      const s = this.searchText.toLowerCase();
+
+      // default to tab if search is empty
+      if (s === "") {
+        this.setDisplayData(this.tab);
+        return;
+      }
+      // search page, key, and translatedText.
+      this.displayData = this.allData.filter(
+        (e) =>
+          e.page.toLowerCase() === s ||
+          e.key.toLowerCase() === s ||
+          e.translatedText[this.user.languageTo]?.toLowerCase() === s ||
+          e.translatedText[this.user.languageFrom]?.toLowerCase() === s ||
+          e.page.toLowerCase().includes(s) ||
+          e.key.toLowerCase().includes(s) ||
+          e.translatedText[this.user.languageTo]?.toLowerCase().includes(s) ||
+          e.translatedText[this.user.languageFrom]?.toLowerCase().includes(s)
+      );
+
+      // no match output
+      this.noMatches();
+    },
+
+    /**
+     * used for scroll watching
+     */
+    onTranslatorScroll(info) {
+      this.scrollDown = info.direction === "down";
+    },
+
+    /**
+     * updates frontend data
+     */
     fixData(arrData) {
       const updateDataObject = this.arrData.find(
         (item) => item.key === this.currentKey
@@ -688,36 +762,53 @@ export default {
         JSON.parse(JSON.stringify(this.editItemData))
       );
     },
+
+    /**
+     * Displays no match screen if search does not find anything to match
+     */
     noMatches() {
       if (!this.displayData.length) {
         this.$refs["loader"].classList.add("hidden");
         this.$refs["no-matches"].classList.remove("hidden");
       }
     },
+
+    /**
+     * Loading animation to show feedback while waiting for match generation
+     */
     loadMatches() {
       if (!this.displayData.length) {
         this.$refs["loader"].classList.remove("hidden");
         this.$refs["no-matches"].classList.add("hidden");
       }
     },
+
+    /**
+     * Gets the item by key in order to edit
+     */
     sendItem(item) {
       this.editItem = true;
       this.currentKey = item.key;
       this.editItemData = JSON.parse(JSON.stringify(item));
     },
+
+    /**
+     * Gets the item by key in order to delete
+     */
     sendDeleteItem(item) {
       this.deleteItem = true;
       this.deleteItemKey = item.key;
     },
+
+    /**
+     * Check if currentData has changed in input fields
+     */
     checkChanges() {
       const current = JSON.stringify(
         this.currentData.find((item) => item.key === this.editItemData.key)
       );
       const changed = JSON.stringify(this.editItemData);
-      console.log(
-        !this.allData.find((item) => item.key === this.editItemData.key) &&
-          current !== changed
-      );
+
       this.editItemSubmit = current !== changed;
     },
   },
@@ -726,31 +817,27 @@ export default {
   },
   async created() {
     let firstTab;
-    this.addItemData = {
-      key: null,
-      translatedText: {
-        en: null,
-      },
-      description: "",
-      page: null,
-    };
     try {
+      // setting page tab values from backend
       const pages = await this.$axios.get("/apiV1/get_pages");
-      this.filterPages = pages.data.list;
-      firstTab = this.filterPages[0];
+      this.filteredData = pages.data.list;
+      firstTab = this.filteredData[0];
       this.tab = firstTab;
 
+      // grabbing translations from backend and parsing editItemData
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
       this.editItemData = JSON.parse(JSON.stringify(this.allData[0]));
       this.currentKey = this.editItemData.key;
 
+      // deep clone of data for change tracking
       this.allData.forEach((item) => {
         const clone = JSON.parse(JSON.stringify(item));
         this.currentData.push(clone);
       });
 
-      this.pageFilter(firstTab);
+      // filter for first load
+      this.setDisplayData(firstTab);
     } catch (err) {
       this.serverError(err);
     }
