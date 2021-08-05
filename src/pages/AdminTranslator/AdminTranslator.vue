@@ -173,7 +173,7 @@
             />
           </q-fab>
         </q-page-sticky>
-        <div class="q-ma-xl" style="height:10px"></div>
+        <div class="q-ma-xl" style="height: 10px"></div>
       </q-page>
     </q-page-container>
 
@@ -357,9 +357,9 @@
             label="Submit"
             :disabled="
               addPageData === '' ||
-                !!filterPages.find(
-                  (e) => e.toLowerCase() === addPageData.toLowerCase()
-                )
+              !!filterPages.find(
+                (e) => e.toLowerCase() === addPageData.toLowerCase()
+              )
             "
             color="accent"
             v-close-popup
@@ -433,9 +433,9 @@
             label="Submit"
             :disabled="
               renamePageData === '' ||
-                !!filterPages.find(
-                  (e) => e.toLowerCase() === renamePageData.toLowerCase()
-                )
+              !!filterPages.find(
+                (e) => e.toLowerCase() === renamePageData.toLowerCase()
+              )
             "
             color="accent"
             v-close-popup
@@ -634,8 +634,8 @@ export default {
         this.pageFilter(this.tab);
         return;
       }
-      // search page, key, and translatedText.
 
+      // search page, key, and translatedText.
       this.displayData = this.allData.filter(
         (e) =>
           e.page.toLowerCase() === s ||

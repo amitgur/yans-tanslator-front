@@ -70,7 +70,7 @@
                   </div>
                 </div>
               </div>
-              <div class="col-6 ">
+              <div class="col-6">
                 <q-input
                   outlined
                   color="grey"
@@ -143,7 +143,7 @@
                 floating
                 :class="{ hidden: changedDataSize == 0 }"
                 class="update-button-transition q-px-sm"
-                style="font-size: 1em; min-width: 1.5em; height: 1.5em;"
+                style="font-size: 1em; min-width: 1.5em; height: 1.5em"
                 >{{ changedDataSize }}</q-badge
               >
             </q-btn>
