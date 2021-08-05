@@ -5,8 +5,9 @@
       <q-toolbar
         id="header-toolbar"
         :style="{
-          height: `${headerHight}px`,
+          height: `${headerHeight}px`,
           backgroundColor: '#394053',
+          padding: '0 2em',
         }"
       >
         <q-btn
@@ -16,6 +17,7 @@
           round
           icon="menu"
           @click="left = !left"
+          v-show="isSignIn"
         />
         <q-btn
           v-for="(menuItem, index) in menuList"
@@ -23,7 +25,8 @@
           v-show="showMenuItemByUser(menuItem.profile)"
           flat
           @click="clickMenuItem(menuItem)"
-          class="q-mr-sm gt-sm english-small text-white text-bold"
+          class="q-mr-sm gt-sm english-small text-bold"
+          :class="menuItem.link === currentItem ? 'text-blue-2' : 'text-white'"
           ><span
             class="english-small"
             style="font-size: 20px; font-weight: 400"
@@ -91,8 +94,12 @@
         <template>
           <q-item
             v-for="(menuItem, index) in menuList"
+            v-show="showMenuItemByUser(menuItem.profile)"
             :key="index"
             clickable
+            :class="
+              menuItem.link === currentItem ? 'text-blue-8' : 'text-black'
+            "
             @click="clickMenuItem(menuItem)"
             v-ripple
           >
@@ -117,19 +124,20 @@ export default {
   data() {
     return {
       scrollOn: false,
-      headerHight: 90,
+      headerHeight: 90,
       menuTag: null,
       left: false,
+      currentItem: "",
     };
   },
   methods: {
     // change menu height on scroll
     onScroll(info) {
       if (info.position > 50) {
-        this.headerHight = 40;
+        this.headerHeight = 40;
         this.scrollOn = true;
       } else {
-        this.headerHight = 90;
+        this.headerHeight = 90;
         this.scrollOn = false;
       }
     },
@@ -154,6 +162,7 @@ export default {
       } else {
         // link
         try {
+          this.currentItem = this.$router.currentRoute.path;
           await this.$router.push(menuItem.link);
         } catch (err) {
           console.error(err);
@@ -178,6 +187,9 @@ export default {
   },
   computed: {
     ...mapState("Auth", ["isSignIn", "user"]),
+  },
+  created() {
+    this.currentItem = this.$router.currentRoute.path;
   },
 };
 </script>

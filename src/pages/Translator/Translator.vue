@@ -5,31 +5,50 @@
     <q-page-container>
       <q-page class="items-center">
         <div class="q-mx-xl q-px-xl q-mt-lg">
-          <!-- search bar -->
-          <q-input
-            bottom-slots
-            v-model="searchText"
-            @keyup="searchFilter"
-            label="Search"
-            style="max-width: 400px"
-          >
-            <template v-slot:append>
-              <q-icon
-                v-if="searchText"
-                name="cancel"
-                @click.stop="
-                  searchText = '';
-                  searchFilter();
-                "
-                class="cursor-pointer"
-              />
-              <q-icon name="search" />
-            </template>
-          </q-input>
+          <div class="row justify-between">
+            <!-- search bar -->
+            <q-input
+              bottom-slots
+              v-model="searchText"
+              @keyup="searchFilter"
+              label="Search"
+              style="min-width: 400px;"
+            >
+              <template v-slot:append>
+                <q-icon
+                  v-if="searchText"
+                  name="cancel"
+                  @click.stop="
+                    searchText = '';
+                    searchFilter();
+                  "
+                  class="cursor-pointer"
+                />
+                <q-icon name="search" />
+              </template>
+            </q-input>
+            <!-- language from toggle -->
+            <q-btn-toggle
+              v-model="translateFrom"
+              class="language-toggle q-py-md"
+              no-caps
+              unelevated
+              rounded
+              padding="0.2em 1em"
+              toggle-color="blue-7"
+              color="grey-3"
+              text-color="primary"
+              :options="[
+                { label: 'English', value: 'en' },
+                { label: 'עברית', value: 'he' },
+              ]"
+              @click="togglePreferedLanguageFrom"
+            />
+          </div>
 
           <!-- tabs-page selector -->
           <div
-            :class="{ hidden: searchText != '' }"
+            :class="{ hidden: searchText !== '' || allData.length === 0 }"
             style="transition: all 0.5s"
           >
             <q-card>
@@ -115,12 +134,18 @@
               :class="{ hidden: displayData.length > 0 }"
               class="q-my-xl q-py-xl justify-center"
             >
-              <div ref="loader" class="loader q-ma-none" />
+              <div class="loader q-ma-none" :class="{ hidden: !isLoading }" />
               <div
-                ref="no-matches"
-                class="text-h1 text-center text-grey-4 hidden"
+                class="text-h1 text-center text-grey-4"
+                :class="{ hidden: !isNoMatches }"
               >
                 No Matches
+              </div>
+              <div
+                class="text-h1 text-center text-grey-4"
+                :class="{ hidden: !isNoEntries }"
+              >
+                Empty
               </div>
             </div>
           </div>
@@ -177,6 +202,11 @@ export default {
       changedData: new Map(),
       changedDataSize: 0,
       searchText: "",
+      translateFrom: "",
+
+      isLoading: false,
+      isNoEntries: false,
+      isNoMatches: false,
     };
   },
 
@@ -188,25 +218,43 @@ export default {
      * checks this.changedData
      */
     async updateTranslation() {
-      if (this.changedDataSize > 0) {
-        const res = await this.$axios.post(
-          "/apiV1/update_translations",
-          Object.fromEntries(this.changedData)
-        );
-
-        this.$q.notify({
-          message: "Updated Translations",
-        });
-        // fix currentData on update
-        for (const [key, value] of this.changedData) {
-          const updateDataObject = this.currentData.find(
-            (item) => item.key === key
+      try {
+        if (this.changedDataSize > 0) {
+          const res = await this.$axios.post(
+            "/apiV1/update_translations",
+            Object.fromEntries(this.changedData)
           );
-          updateDataObject.translatedText[this.user.languageTo] = value;
-        }
 
-        this.changedData.clear();
-        this.changedDataSize = this.changedData.size;
+          this.$q.notify({
+            message: "Updated Translations",
+          });
+          // fix currentData on update
+          for (const [key, value] of this.changedData) {
+            const updateDataObject = this.currentData.find(
+              (item) => item.key === key
+            );
+            updateDataObject.translatedText[this.user.languageTo] = value;
+          }
+
+          this.changedData.clear();
+          this.changedDataSize = this.changedData.size;
+        }
+      } catch (err) {
+        this.serverError(err);
+      }
+    },
+
+    /**
+     * handle changing from language
+     */
+    async togglePreferedLanguageFrom() {
+      try {
+        const res = await this.$axios.post("/apiV1/update_language", {
+          id: this.user.id,
+          from: this.translateFrom,
+        });
+      } catch (err) {
+        this.serverError(err);
       }
     },
 
@@ -229,7 +277,7 @@ export default {
           e.translatedText[this.user.languageTo] === undefined
       );
 
-      this.noMatches();
+      this.noEntries();
     },
 
     /**
@@ -250,11 +298,11 @@ export default {
           e.page.toLowerCase() == s ||
           e.key.toLowerCase() == s ||
           e.translatedText[this.user.languageTo]?.toLowerCase() == s ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase() == s ||
+          e.translatedText[this.translateFrom]?.toLowerCase() == s ||
           e.page.toLowerCase().includes(s) ||
           e.key.toLowerCase().includes(s) ||
           e.translatedText[this.user.languageTo]?.toLowerCase().includes(s) ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase().includes(s)
+          e.translatedText[this.translateFrom]?.toLowerCase().includes(s)
       );
 
       // loading animation
@@ -269,7 +317,7 @@ export default {
      */
     currentFromText(key) {
       const staticClone = this.currentData.find((e) => e.key === key)
-        .translatedText[this.user.languageFrom];
+        .translatedText[this.translateFrom];
       return staticClone;
     },
 
@@ -308,9 +356,21 @@ export default {
      * Displays no match screen if search does not find anything to match
      */
     noMatches() {
-      if (this.displayData.length == 0) {
-        this.$refs["loader"].classList.add("hidden");
-        this.$refs["no-matches"].classList.remove("hidden");
+      if (!this.displayData.length) {
+        this.isLoading = false;
+        this.isNoEntries = false;
+        this.isNoMatches = true;
+      }
+    },
+
+    /**
+     * Displays no entires screen if search does not find any entries
+     */
+    noEntries() {
+      if (!this.displayData.length) {
+        this.isLoading = false;
+        this.isNoEntries = true;
+        this.isNoMatches = false;
       }
     },
 
@@ -318,9 +378,10 @@ export default {
      * Loading animation to show feedback while waiting for match generation
      */
     loadMatches() {
-      if (this.displayData.length == 0) {
-        this.$refs["loader"].classList.remove("hidden");
-        this.$refs["no-matches"].classList.add("hidden");
+      if (!this.displayData.length) {
+        this.isLoading = true;
+        this.isNoEntries = false;
+        this.isNoMatches = false;
       }
     },
   },
@@ -329,6 +390,7 @@ export default {
   },
   async created() {
     let firstTab;
+    this.translateFrom = this.user.languageFrom;
     try {
       // setting page tab values from backend
       const pages = await this.$axios.get("/apiV1/get_pages");
@@ -349,6 +411,7 @@ export default {
       // filter for first load
       this.setDisplayData(firstTab);
     } catch (err) {
+      this.noEntries();
       this.serverError(err);
     }
   },
