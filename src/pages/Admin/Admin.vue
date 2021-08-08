@@ -28,7 +28,7 @@
 
           <!-- tabs-page selector -->
           <div
-            :class="{ hidden: searchText !== '' }"
+            :class="{ hidden: searchText !== '' || allData.length === 0 }"
             style="transition: all 0.5s"
           >
             <q-card>
@@ -143,12 +143,18 @@
             :class="{ hidden: displayData.length > 0 }"
             class="q-my-xl q-py-xl justify-center"
           >
-            <div ref="loader" class="loader q-ma-none" />
+            <div class="loader q-ma-none" :class="{ hidden: !isLoading }" />
             <div
-              ref="no-matches"
-              class="text-h1 text-center text-grey-4 hidden"
+              class="text-h1 text-center text-grey-4"
+              :class="{ hidden: !isNoMatches }"
             >
               No Matches
+            </div>
+            <div
+              class="text-h1 text-center text-grey-4"
+              :class="{ hidden: !isNoEntries }"
+            >
+              Empty
             </div>
           </div>
         </div>
@@ -357,9 +363,9 @@
             label="Submit"
             :disabled="
               addPageData === '' ||
-              !!filterPages.find(
-                (e) => e.toLowerCase() === addPageData.toLowerCase()
-              )
+                !!filteredData.find(
+                  (e) => e.toLowerCase() === addPageData.toLowerCase()
+                )
             "
             color="accent"
             v-close-popup
@@ -433,9 +439,9 @@
             label="Submit"
             :disabled="
               renamePageData === '' ||
-              !!filteredData.find(
-                (e) => e.toLowerCase() === renamePageData.toLowerCase()
-              )
+                !!filteredData.find(
+                  (e) => e.toLowerCase() === renamePageData.toLowerCase()
+                )
             "
             color="accent"
             v-close-popup
@@ -469,6 +475,9 @@ export default {
       filteredData: [],
       currentKey: "",
       searchText: "",
+      isLoading: false,
+      isNoEntries: false,
+      isNoMatches: false,
 
       editItem: false,
       editItemData: { translatedText: { en: "" } },
@@ -513,7 +522,6 @@ export default {
         res = await this.$axios.post("/apiV1/admin_edit_translation", sendData);
       } catch (err) {
         this.serverError(err);
-        return;
       }
 
       // fix currentData and allData on update
@@ -545,7 +553,6 @@ export default {
         });
       } catch (err) {
         this.serverError(err);
-        return;
       }
     },
 
@@ -565,7 +572,6 @@ export default {
         this.clearAddItem();
       } catch (err) {
         this.serverError(err);
-        return;
       }
     },
 
@@ -582,7 +588,6 @@ export default {
       } catch (err) {
         this.clearPage();
         this.serverError(err);
-        return;
       }
     },
 
@@ -604,7 +609,6 @@ export default {
           this.clearPage();
         } catch (err) {
           this.serverError(err);
-          return;
         }
       }
     },
@@ -632,7 +636,6 @@ export default {
         this.clearPage();
       } catch (err) {
         this.serverError(err);
-        return;
       }
     },
 
@@ -643,7 +646,7 @@ export default {
      */
     setDisplayData(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
-      this.noMatches();
+      this.noEntries();
     },
 
     /**
@@ -768,8 +771,20 @@ export default {
      */
     noMatches() {
       if (!this.displayData.length) {
-        this.$refs["loader"].classList.add("hidden");
-        this.$refs["no-matches"].classList.remove("hidden");
+        this.isLoading = false;
+        this.isNoEntries = false;
+        this.isNoMatches = true;
+      }
+    },
+
+    /**
+     * Displays no entires screen if search does not find any entries
+     */
+    noEntries() {
+      if (!this.displayData.length) {
+        this.isLoading = false;
+        this.isNoEntries = true;
+        this.isNoMatches = false;
       }
     },
 
@@ -778,8 +793,9 @@ export default {
      */
     loadMatches() {
       if (!this.displayData.length) {
-        this.$refs["loader"].classList.remove("hidden");
-        this.$refs["no-matches"].classList.add("hidden");
+        this.isLoading = true;
+        this.isNoEntries = false;
+        this.isNoMatches = false;
       }
     },
 
@@ -839,6 +855,7 @@ export default {
       // filter for first load
       this.setDisplayData(firstTab);
     } catch (err) {
+      this.noEntries();
       this.serverError(err);
     }
   },

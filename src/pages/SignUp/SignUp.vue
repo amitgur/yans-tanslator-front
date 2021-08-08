@@ -3,7 +3,7 @@
     class="column q-pa-xl justify-center items-center content-center full-width bg-blue-grey-2"
   >
     <div class="column">
-      <h3 class="text-center q-mt-xl q-pt-xl">Sign Up</h3>
+      <h3 class="text-center">Sign Up</h3>
       <q-card square bordered class="q-pa-lg shadow-1 signup">
         <q-card-section>
           <q-form class="q-gutter-md">
@@ -147,7 +147,9 @@ export default {
         const response = await this.$axios.post("/apiV1/login_user", user);
         // auto-login
         this.$store.dispatch("Auth/signIn", response.data);
-        this.$router.push("/translator");
+        user.profile === "admin"
+          ? this.$router.push("/admin-translator")
+          : this.$router.push("/translator");
       } catch (err) {
         this.serverError(err);
       }

@@ -33,7 +33,7 @@ const routes = [
   {
     path: "/admin-translator",
     meta: { requiresAuth: true },
-    component: () => import("pages/AdminTranslator/AdminTranslator"),
+    component: () => import("pages/Admin/Admin"),
   },
 ];
 
