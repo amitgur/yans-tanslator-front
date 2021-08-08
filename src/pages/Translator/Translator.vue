@@ -29,7 +29,7 @@
 
           <!-- tabs-page selector -->
           <div
-            :class="{ hidden: searchText != '' }"
+            :class="{ hidden: searchText !== '' }"
             style="transition: all 0.5s"
           >
             <q-card>
@@ -92,21 +92,19 @@
               <div class="col-2" style="text-align: center">
                 <q-btn class="bg-white" label="details">
                   <q-popup-proxy>
-                    <q-banner class="q-pa-lg">
-                      <template v-slot:avatar>
-                        <q-icon name="info" color="primary" />
-                      </template>
-                      <div>Description:</div>
-                      <hr color="lightgrey" size="0.5" />
-                      <div>
-                        {{ item.description ? item.description : "-" }}
-                      </div>
-                      <br />
-                      <div>
-                        Key:
-                        {{ item.key }}
-                      </div>
-                    </q-banner>
+                    <template v-slot:avatar>
+                      <q-icon name="info" color="primary" />
+                    </template>
+                    <div>Description:</div>
+                    <hr color="lightgrey" size="0.5" />
+                    <div>
+                      {{ item.description ? item.description : "-" }}
+                    </div>
+                    <br />
+                    <div>
+                      Key:
+                      {{ item.key }}
+                    </div>
                   </q-popup-proxy>
                 </q-btn>
               </div>
@@ -181,12 +179,7 @@ export default {
   },
 
   methods: {
-    // -- CRUD -------------------------------------
-
-    /**
-     * Handling sending updated translations to back end
-     * checks this.changedData
-     */
+    // Handling sending updated translations to back end, checks this.changedData
     async updateTranslation() {
       if (this.changedDataSize > 0) {
         const res = await this.$axios.post(
@@ -210,18 +203,12 @@ export default {
       }
     },
 
-    // -- Input Handling ---------------------------
-
-    /**
-     * Takes a page name and sets displayData
-     */
+    // Takes a page name and sets displayData
     setDisplayData(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
     },
 
-    /**
-     * Filters through displayData and displays incompleted
-     */
+    // Filters through displayData and displays incomplete
     incompleteFilter() {
       this.displayData = this.allData.filter(
         (e) =>
@@ -232,14 +219,11 @@ export default {
       this.noMatches();
     },
 
-    /**
-     * set displayData based on search
-     * also hides tabs
-     */
+    // set displayData based on search and also hides tabs
     searchFilter() {
       const s = this.searchText.toLowerCase();
       // default to tab if search is empty
-      if (s == "") {
+      if (s === "") {
         this.setDisplayData(this.tab);
         return;
       }
@@ -247,10 +231,10 @@ export default {
 
       this.displayData = this.allData.filter(
         (e) =>
-          e.page.toLowerCase() == s ||
-          e.key.toLowerCase() == s ||
-          e.translatedText[this.user.languageTo]?.toLowerCase() == s ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase() == s ||
+          e.page.toLowerCase() === s ||
+          e.key.toLowerCase() === s ||
+          e.translatedText[this.user.languageTo]?.toLowerCase() === s ||
+          e.translatedText[this.user.languageFrom]?.toLowerCase() === s ||
           e.page.toLowerCase().includes(s) ||
           e.key.toLowerCase().includes(s) ||
           e.translatedText[this.user.languageTo]?.toLowerCase().includes(s) ||
@@ -264,19 +248,15 @@ export default {
       this.noMatches();
     },
 
-    /**
-     * returns unmodified languageFrom text value
-     */
+    // returns unmodified languageFrom text value
     currentFromText(key) {
-      const staticClone = this.currentData.find((e) => e.key === key)
-        .translatedText[this.user.languageFrom];
-      return staticClone;
+      return this.currentData.find((e) => e.key === key).translatedText[
+        this.user.languageFrom
+      ];
     },
 
-    /**
-     * takes current key and input text changes and tracks them
-     * if changes return to original state, item is removed from tracking
-     */
+    // takes current key and input text changes and tracks them.
+    // if changes, return to original state, item is removed from tracking.
     storeChanges(key, changes) {
       const current = this.currentData.find((item) => item.key === key)
         .translatedText[this.user.languageTo];
@@ -291,34 +271,22 @@ export default {
       }
     },
 
-    // -- Other ------------------------------------
-
-    /**
-     * used for scroll watching
-     */
+    // used for scroll watching
     onTranslatorScroll(info) {
-      if (info.direction == "down") {
-        this.scrollDown = true;
-      } else {
-        this.scrollDown = false;
-      }
+      this.scrollDown = info.direction === "down";
     },
 
-    /**
-     * Displays no match screen if search does not find anything to match
-     */
+    // Displays no match screen if search does not find anything to match
     noMatches() {
-      if (this.displayData.length == 0) {
+      if (!this.displayData.length) {
         this.$refs["loader"].classList.add("hidden");
         this.$refs["no-matches"].classList.remove("hidden");
       }
     },
 
-    /**
-     * Loading animation to show feedback while waiting for match generation
-     */
+    // Loading animation to show feedback while waiting for match generation
     loadMatches() {
-      if (this.displayData.length == 0) {
+      if (!this.displayData.length) {
         this.$refs["loader"].classList.remove("hidden");
         this.$refs["no-matches"].classList.add("hidden");
       }
