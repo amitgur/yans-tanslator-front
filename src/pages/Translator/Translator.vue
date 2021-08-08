@@ -111,19 +111,21 @@
               <div class="col-2" style="text-align: center">
                 <q-btn class="bg-white" label="details">
                   <q-popup-proxy>
-                    <template v-slot:avatar>
-                      <q-icon name="info" color="primary" />
-                    </template>
-                    <div>Description:</div>
-                    <hr color="lightgrey" size="0.5" />
-                    <div>
-                      {{ item.description ? item.description : "-" }}
-                    </div>
-                    <br />
-                    <div>
-                      Key:
-                      {{ item.key }}
-                    </div>
+                    <q-banner class="q-pa-lg">
+                      <template v-slot:avatar>
+                        <q-icon name="info" color="primary" />
+                      </template>
+                      <div>Description:</div>
+                      <hr color="lightgrey" size="0.5" />
+                      <div>
+                        {{ item.description ? item.description : "-" }}
+                      </div>
+                      <br />
+                      <div>
+                        Key:
+                        {{ item.key }}
+                      </div>
+                    </q-banner>
                   </q-popup-proxy>
                 </q-btn>
               </div>
@@ -358,7 +360,9 @@ export default {
     try {
       // setting page tab values from backend
       const pages = await this.$axios.get("/apiV1/get_pages");
-      this.filteredData = pages.data.list;
+      this.filteredData = pages.data.map(function(item) {
+        return item.name;
+      });
       firstTab = this.filteredData[0];
       this.tab = firstTab;
 

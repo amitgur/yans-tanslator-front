@@ -28,7 +28,7 @@
 
           <!-- tabs-page selector -->
           <div
-            :class="{ hidden: searchText !== '' || allData.length === 0 }"
+            :class="{ hidden: searchText !== '' }"
             style="transition: all 0.5s"
           >
             <q-card>
@@ -144,19 +144,14 @@
             class="q-my-xl q-py-xl justify-center"
           >
             <div class="loader q-ma-none" :class="{ hidden: !isLoading }" />
-            <div
-              class="text-h1 text-center text-grey-4"
-              :class="{ hidden: !isNoMatches }"
-            >
-              No Matches
-            </div>
-            <div
-              class="text-h1 text-center text-grey-4"
-              :class="{ hidden: !isNoEntries }"
-            >
-              Empty
+            <div class="text-h1 text-center text-grey-4 empty-texts">
+              {{ noDisplayText }}
+              <div class="text-h4">{{ noDisplaySubtitle }}</div>
             </div>
           </div>
+        </div>
+        <div class="indicator" :class="{ hidden: !!filteredData.length }">
+          <q-icon name="arrow_downward" />
         </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
           <q-fab
@@ -456,12 +451,13 @@
 import MyMenu from "components/MyMenu";
 import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
+import setDisplayData from "src/mixins/setDisplayData";
 
 import { mapState } from "vuex";
 
 export default {
   name: "Translator",
-  mixins: [myMixins],
+  mixins: [myMixins, setDisplayData],
   components: { MyMenu },
   data() {
     return {
@@ -476,8 +472,8 @@ export default {
       currentKey: "",
       searchText: "",
       isLoading: false,
-      isNoEntries: false,
-      isNoMatches: false,
+      noDisplayText: "",
+      noDisplaySubtitle: "",
 
       editItem: false,
       editItemData: { translatedText: { en: "" } },
@@ -506,11 +502,7 @@ export default {
   },
 
   methods: {
-    // -- CRUD -------------------------------------
-
-    /**
-     * Send data edit to backend
-     */
+    // Send data edit to backend
     async submitChanges() {
       const sendData = {
         currentKey: this.currentKey,
@@ -533,10 +525,8 @@ export default {
       });
     },
 
-    /**
-     * deleting entire item from database
-     * this is permanent
-     */
+    // deleting entire item from database
+    // this is permanent
     async destroyItem() {
       try {
         const res = await this.$axios.delete(
@@ -547,6 +537,7 @@ export default {
         this.deleteOneFromArray(this.allData, this.deleteItemKey);
         this.deleteOneFromArray(this.currentData, this.deleteItemKey);
         this.setDisplayData(this.tab);
+        this.noDisplayData();
 
         this.$q.notify({
           message: "Translation Deleted",
@@ -556,9 +547,7 @@ export default {
       }
     },
 
-    /**
-     * sending new translation item to backend
-     */
+    // sending new translation item to backend
     async submitAddItem() {
       try {
         const res = await this.$axios.post(
@@ -575,15 +564,18 @@ export default {
       }
     },
 
-    /**
-     * creates new page filter
-     */
+    // creates new page filter
     async addNewPage() {
       try {
         this.filteredData.push(this.addPageData);
-        const res = await this.$axios.post("/apiV1/update_pages", {
-          newPages: this.filteredData,
+        const res = await this.$axios.post("/apiV1/add_page", {
+          name: this.addPageData,
         });
+        if (this.filteredData.length === 1) {
+          this.tab = this.addPageData;
+        }
+        this.setDisplayData(this.tab);
+        this.noDisplayData();
         this.clearPage();
       } catch (err) {
         this.clearPage();
@@ -591,10 +583,8 @@ export default {
       }
     },
 
-    /**
-     * deletes page filter
-     * only allowed if page filter has no entries
-     */
+    // deletes page filter
+    // only allowed if page filter has no entries
     async destroyPage() {
       if (this.deletePage) {
         try {
@@ -602,10 +592,11 @@ export default {
           this.filteredData.splice(i, 1);
           this.tab = this.filteredData[0];
           this.setDisplayData(this.tab);
-
-          const res = await this.$axios.post("/apiV1/update_pages", {
-            newPages: this.filteredData,
+          const res = await this.$axios.delete("/apiV1/delete_page", {
+            data: { name: this.deletePageData },
           });
+
+          this.noDisplayData();
           this.clearPage();
         } catch (err) {
           this.serverError(err);
@@ -613,18 +604,17 @@ export default {
       }
     },
 
-    /**
-     * renames page and all translations in page
-     */
+    // renames page and all translations in page
     async changePageName() {
       try {
         const i = this.filteredData.indexOf(this.deletePageData);
         this.filteredData.splice(i, 1, this.renamePageData);
-        this.tab = this.filteredData[0];
+        this.tab = this.renamePageData;
         this.setDisplayData(this.tab);
 
-        const res = await this.$axios.post("/apiV1/update_pages", {
-          newPages: this.filteredData,
+        const res = await this.$axios.post("/apiV1/update_page", {
+          oldName: this.deletePageData,
+          newName: this.renamePageData,
         });
 
         // Also change all pages for all translation in page
@@ -633,25 +623,22 @@ export default {
           newPageName: this.renamePageData,
         });
 
+        this.fixPageData(this.allData);
+        this.fixPageData(this.currentData);
+        this.setDisplayData(this.tab);
+
         this.clearPage();
       } catch (err) {
         this.serverError(err);
       }
     },
 
-    // -- Input Handling ---------------------------
+    // Passes in the current page and displays all the data for the specific page
+    // setDisplayData(filterString) {
+    //   this.displayData = this.allData.filter((e) => e.page === filterString);
+    // },
 
-    /**
-     * Passes in the current page and displays all the data for the specific page
-     */
-    setDisplayData(filterString) {
-      this.displayData = this.allData.filter((e) => e.page === filterString);
-      this.noEntries();
-    },
-
-    /**
-     * Add new item with all fields filled
-     */
+    // Add new item with all fields filled
     addItemChanged() {
       // check if all three fields are filled and switch bool
       this.addItemSubmit =
@@ -661,9 +648,7 @@ export default {
         !this.allData.find((item) => item.key === this.addItemData.key);
     },
 
-    /**
-     * Clears data from input field upon adding new items
-     */
+    // Clears data from input field upon adding new items
     clearAddItem() {
       this.addItemData = {
         key: null,
@@ -676,37 +661,26 @@ export default {
       this.addItemSubmit = false;
     },
 
-    /**
-     * Clears data from input field in each page component
-     */
+    // Clears data from input field in each page component
     clearPage() {
       this.addPageData = "";
       this.renamePageData = "";
       this.deletePageData = "";
     },
 
-    /**
-     * Change boolean value to let user rename the page
-     */
+    // Change boolean value to let user rename the page
     renamePageAllow(page) {
       this.renamePage = true;
       this.deletePageData = page;
     },
 
-    // -- Other ------------------------------------
-
-    /**
-     * Updating front end data
-     */
+    // Updating front end data
     deleteOneFromArray(arrData, key) {
       const i = arrData.findIndex((e) => e.key === key);
-      console.log(i);
       arrData.splice(i, 1);
     },
 
-    /**
-     * If the page is empty, allow user to delete
-     */
+    // If the page is empty, allow user to delete
     deletePageAllow(page) {
       const checkData = this.allData.filter((e) => e.page === page);
       this.deletePageData = page;
@@ -717,16 +691,15 @@ export default {
       }
     },
 
-    /**
-     * filter display data by searched keyword
-     * checks: page, key, text from, and text to
-     */
+    // filter display data by searched keyword
+    // checks: page, key, text from, and text to
     searchFilter() {
       const s = this.searchText.toLowerCase();
 
       // default to tab if search is empty
       if (s === "") {
         this.setDisplayData(this.tab);
+        this.noDisplayData();
         return;
       }
       // search page, key, and translatedText.
@@ -742,22 +715,17 @@ export default {
           e.translatedText[this.user.languageFrom]?.toLowerCase().includes(s)
       );
 
-      // no match output
-      this.noMatches();
+      this.noDisplayData();
     },
 
-    /**
-     * used for scroll watching
-     */
+    // used for scroll watching
     onTranslatorScroll(info) {
       this.scrollDown = info.direction === "down";
     },
 
-    /**
-     * updates frontend data
-     */
+    // updates frontend data
     fixData(arrData) {
-      const updateDataObject = this.arrData.find(
+      const updateDataObject = arrData.find(
         (item) => item.key === this.currentKey
       );
       Object.assign(
@@ -766,59 +734,34 @@ export default {
       );
     },
 
-    /**
-     * Displays no match screen if search does not find anything to match
-     */
-    noMatches() {
-      if (!this.displayData.length) {
-        this.isLoading = false;
-        this.isNoEntries = false;
-        this.isNoMatches = true;
-      }
+    // updates frontend page data during rename
+    fixPageData(arrData) {
+      arrData.forEach((item) => {
+        if (item.page === this.deletePageData) item.page = this.renamePageData;
+      });
     },
 
-    /**
-     * Displays no entires screen if search does not find any entries
-     */
-    noEntries() {
-      if (!this.displayData.length) {
-        this.isLoading = false;
-        this.isNoEntries = true;
-        this.isNoMatches = false;
-      }
-    },
-
-    /**
-     * Loading animation to show feedback while waiting for match generation
-     */
+    // Loading animation to show feedback while waiting for match generation
     loadMatches() {
       if (!this.displayData.length) {
         this.isLoading = true;
-        this.isNoEntries = false;
-        this.isNoMatches = false;
       }
     },
 
-    /**
-     * Gets the item by key in order to edit
-     */
+    // Gets the item by key in order to edit
     sendItem(item) {
       this.editItem = true;
       this.currentKey = item.key;
       this.editItemData = JSON.parse(JSON.stringify(item));
     },
 
-    /**
-     * Gets the item by key in order to delete
-     */
+    // Gets the item by key in order to delete
     sendDeleteItem(item) {
       this.deleteItem = true;
       this.deleteItemKey = item.key;
     },
 
-    /**
-     * Check if currentData has changed in input fields
-     */
+    // Check if currentData has changed in input fields
     checkChanges() {
       const current = JSON.stringify(
         this.currentData.find((item) => item.key === this.editItemData.key)
@@ -826,6 +769,22 @@ export default {
       const changed = JSON.stringify(this.editItemData);
 
       this.editItemSubmit = current !== changed;
+    },
+
+    noDisplayData() {
+      let text = "";
+      let subtitle = "";
+      if (!this.filteredData.length) {
+        text = "Welcome!";
+        subtitle = "Add a new page to get started";
+      } else if (this.searchText !== "") {
+        text = "No Matches";
+      } else if (!this.displayData.length) {
+        text = "Empty";
+      }
+
+      this.noDisplayText = text;
+      this.noDisplaySubtitle = subtitle;
     },
   },
   computed: {
@@ -836,15 +795,22 @@ export default {
     try {
       // setting page tab values from backend
       const pages = await this.$axios.get("/apiV1/get_pages");
-      this.filteredData = pages.data.list;
+      this.filteredData = pages.data.map(function(item) {
+        return item.name;
+      });
       firstTab = this.filteredData[0];
       this.tab = firstTab;
 
       // grabbing translations from backend and parsing editItemData
       const res = await this.$axios.get("/apiV1/get_translations");
       this.allData = res.data;
-      this.editItemData = JSON.parse(JSON.stringify(this.allData[0]));
-      this.currentKey = this.editItemData.key;
+
+      if (!!this.allData.length) {
+        this.editItemData = JSON.parse(JSON.stringify(this.allData[0]));
+        this.currentKey = this.editItemData.key;
+      }
+
+      this.noDisplayData();
 
       // deep clone of data for change tracking
       this.allData.forEach((item) => {
@@ -855,7 +821,7 @@ export default {
       // filter for first load
       this.setDisplayData(firstTab);
     } catch (err) {
-      this.noEntries();
+      this.noDisplayData();
       this.serverError(err);
     }
   },
@@ -899,6 +865,15 @@ export default {
   border-radius: 0.3em;
 }
 
+.indicator {
+  position: fixed;
+  right: 18px;
+  bottom: 70px;
+  font-size: 56px;
+  color: lightgray;
+  animation: wake-up 7s linear, indicate 1.2s infinite;
+}
+
 .loader {
   border: 0.5em solid #f3f3f3; /* Light grey */
   border-top: 0.5em solid #6d7c87; /* Blue */
@@ -927,6 +902,14 @@ export default {
   }
 }
 
+.empty-texts {
+  user-select: none; /* supported by Chrome and Opera */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+}
+
 .input-fields {
   width: 25em;
 }
@@ -941,6 +924,31 @@ export default {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes indicate {
+  0% {
+    bottom: 70px;
+  }
+  50% {
+    bottom: 85px;
+  }
+  100% {
+    bottom: 70px;
+  }
+}
+
+@keyframes wake-up {
+  0% {
+    display: block;
+    color: white;
+  }
+  75% {
+    color: white;
+  }
+  100% {
+    color: lightgray;
   }
 }
 </style>
