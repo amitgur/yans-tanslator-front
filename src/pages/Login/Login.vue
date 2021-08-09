@@ -89,7 +89,7 @@ export default {
         await this.$store.dispatch("Auth/signIn", response.data);
         const isAdmin = this.$store.getters["Auth/getIsAdmin"];
         isAdmin
-          ? this.$router.push("/admin-translator")
+          ? this.$router.push("/admin")
           : this.$router.push("/translator");
       } catch (err) {
         this.serverError(err);

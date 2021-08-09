@@ -27,23 +27,33 @@
                 <q-icon name="search" />
               </template>
             </q-input>
-            <!-- language from toggle -->
-            <q-btn-toggle
-              v-model="translateFrom"
-              class="language-toggle q-py-md"
-              no-caps
-              unelevated
-              rounded
-              padding="0.2em 1em"
-              toggle-color="blue-7"
-              color="grey-3"
-              text-color="primary"
-              :options="[
-                { label: 'English', value: 'en' },
-                { label: 'עברית', value: 'he' },
-              ]"
-              @click="togglePreferredLanguageFrom"
-            />
+            <div class="row">
+              <!-- language from toggle -->
+              <q-btn-toggle
+                v-model="translateFrom"
+                class="language-toggle q-py-lg"
+                no-caps
+                unelevated
+                rounded
+                padding="0.2em 1em"
+                toggle-color="blue-7"
+                color="grey-3"
+                text-color="primary"
+                :options="[
+                  { label: 'English', value: 'en' },
+                  { label: 'עברית', value: 'he' },
+                ]"
+                @click="togglePreferredLanguageFrom"
+              />
+              <q-select
+                class="q-ml-xl q-py-md"
+                style="min-width: 200px"
+                outlined
+                label="Database"
+                :options="user.databases"
+                v-model="currentDatabase"
+              />
+            </div>
           </div>
 
           <!-- tabs-page selector -->
@@ -66,7 +76,7 @@
                 />
                 <!-- filter incomplete fields -->
                 <q-tab class="bg-blue text-subtitle2" @click="incompleteFilter">
-                  Incompletes
+                  Incomplete
                 </q-tab>
               </q-tabs>
             </q-card>
@@ -121,8 +131,15 @@
                         {{ item.description ? item.description : "-" }}
                       </div>
                       <br />
+                      <div :class="{ hidden: !isIncomplete }">
+                        <div>
+                          <span style="font-weight: bold">Page:</span>
+                          {{ item.page }}
+                        </div>
+                        <br />
+                      </div>
                       <div>
-                        Key:
+                        <span style="font-weight: bold">Key:</span>
                         {{ item.key }}
                       </div>
                     </q-banner>
@@ -207,6 +224,8 @@ export default {
       isLoading: false,
       isNoEntries: false,
       isNoMatches: false,
+      isIncomplete: false,
+      currentDatabase: "",
     };
   },
 
@@ -254,6 +273,7 @@ export default {
     // Takes a page name and sets displayData
     setDisplayData(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
+      this.isIncomplete = false;
     },
 
     // Filters through displayData and displays incomplete
@@ -263,6 +283,7 @@ export default {
           e.translatedText[this.user.languageTo] === "" ||
           e.translatedText[this.user.languageTo] === undefined
       );
+      this.isIncomplete = true;
 
       this.noEntries();
     },
@@ -355,6 +376,10 @@ export default {
     ...mapState("Auth", ["user"]),
   },
   async created() {
+    // window.onbeforeunload = function() {
+    //   return "";
+    // };
+
     let firstTab;
     this.translateFrom = this.user.languageFrom;
     try {
@@ -378,6 +403,8 @@ export default {
 
       // filter for first load
       this.setDisplayData(firstTab);
+
+      this.currentDatabase = this.user.databases[0];
     } catch (err) {
       this.noEntries();
       this.serverError(err);

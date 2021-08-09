@@ -31,7 +31,7 @@ const routes = [
     component: () => import("pages/Home/Home.vue"),
   },
   {
-    path: "/admin-translator",
+    path: "/admin",
     meta: { requiresAuth: true },
     component: () => import("pages/Admin/Admin"),
   },

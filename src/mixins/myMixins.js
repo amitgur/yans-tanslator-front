@@ -38,7 +38,6 @@ export default {
       this.$q.notify({
         message: msg,
         position: pos ? pos : "bottom",
-        color: "blue-7",
       });
     },
   },

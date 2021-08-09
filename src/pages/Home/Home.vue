@@ -5,7 +5,17 @@
       <q-page class="column items-center">
         <section id="top-section">
           <div id="title" class="text-center">
-            <h1 id="logo-title" class="hebrew-big">Landing Page</h1>
+            <h1 id="logo-title" class="hebrew-big text-capitalize">
+              Welcome{{ isSignIn ? " " + user.name : "" }}!
+            </h1>
+            <q-btn
+              rounded
+              class="q-mt-md q-px-lg"
+              size="lg"
+              color="blue-5"
+              label="start translating"
+              @click="goToTranslator"
+            />
             <!-- <h4 class="logo-subtitle q-mt-md">Your SubTitle</h4> -->
           </div>
         </section>
@@ -18,6 +28,9 @@
 import MyMenu from "components/MyMenu";
 import myMixins from "src/mixins/myMixins";
 import menuList from "pages/menuList";
+
+import { mapState } from "vuex";
+
 export default {
   mixins: [myMixins],
   components: { MyMenu },
@@ -30,8 +43,29 @@ export default {
       menuList,
     };
   },
-  methods: {},
+  methods: {
+    async goToTranslator() {
+      let path = "/translator";
+
+      if (!this.isSignIn) {
+        path = "/login";
+      }
+
+      if (this.user?.profile === "admin") {
+        path = "/admin";
+      }
+
+      try {
+        await this.$router.push(path);
+      } catch (err) {
+        console.log(err);
+      }
+    },
+  },
   mounted() {},
+  computed: {
+    ...mapState("Auth", ["user", "isSignIn"]),
+  },
   async created() {
     await this.$store.dispatch("Auth/checkSignIn");
   },

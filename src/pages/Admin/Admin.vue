@@ -5,26 +5,36 @@
     <q-page-container>
       <q-page class="items-center">
         <div class="q-mx-xl q-px-xl q-my-lg">
-          <q-input
-            bottom-slots
-            v-model="searchText"
-            @keyup="searchFilter"
-            label="Search"
-            style="max-width: 400px"
-          >
-            <template v-slot:append>
-              <q-icon
-                v-if="searchText"
-                name="cancel"
-                @click.stop="
-                  searchText = '';
-                  searchFilter();
-                "
-                class="cursor-pointer"
-              />
-              <q-icon name="search" />
-            </template>
-          </q-input>
+          <div class="row justify-between">
+            <q-input
+              bottom-slots
+              v-model="searchText"
+              @keyup="searchFilter"
+              label="Search"
+              style="min-width: 400px"
+            >
+              <template v-slot:append>
+                <q-icon
+                  v-if="searchText"
+                  name="cancel"
+                  @click.stop="
+                    searchText = '';
+                    searchFilter();
+                  "
+                  class="cursor-pointer"
+                />
+                <q-icon name="search" />
+              </template>
+            </q-input>
+            <q-select
+              class="q-ml-xl q-py-md"
+              style="min-width: 200px"
+              outlined
+              label="Database"
+              :options="user.databases"
+              v-model="currentDatabase"
+            />
+          </div>
 
           <!-- tabs-page selector -->
           <div
@@ -451,13 +461,12 @@
 import MyMenu from "components/MyMenu";
 import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
-import setDisplayData from "src/mixins/setDisplayData";
 
 import { mapState } from "vuex";
 
 export default {
   name: "Translator",
-  mixins: [myMixins, setDisplayData],
+  mixins: [myMixins],
   components: { MyMenu },
   data() {
     return {
@@ -470,6 +479,7 @@ export default {
       currentData: [],
       filteredData: [],
       currentKey: "",
+      currentDatabase: "",
       searchText: "",
       isLoading: false,
       noDisplayText: "",
@@ -559,6 +569,7 @@ export default {
         this.setDisplayData(this.tab);
 
         this.clearAddItem();
+        this.showNotify("Translation Added");
       } catch (err) {
         this.serverError(err);
       }
@@ -634,9 +645,9 @@ export default {
     },
 
     // Passes in the current page and displays all the data for the specific page
-    // setDisplayData(filterString) {
-    //   this.displayData = this.allData.filter((e) => e.page === filterString);
-    // },
+    setDisplayData(filterString) {
+      this.displayData = this.allData.filter((e) => e.page === filterString);
+    },
 
     // Add new item with all fields filled
     addItemChanged() {
@@ -820,6 +831,7 @@ export default {
 
       // filter for first load
       this.setDisplayData(firstTab);
+      this.currentDatabase = this.user.databases[0];
     } catch (err) {
       this.noDisplayData();
       this.serverError(err);

@@ -70,7 +70,9 @@
             }"
             color="white"
           />
-          <q-icon
+          <!-- TODO: add dropdown here -->
+
+          <!-- <q-icon
             name="person"
             class="q-pa-sm"
             size="sm"
@@ -83,7 +85,7 @@
             size="sm"
             v-show="isSignIn && user.profile === 'admin'"
             color="white"
-          />
+          /> -->
         </div>
       </q-toolbar>
     </q-header>
