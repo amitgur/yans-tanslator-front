@@ -33,6 +33,7 @@
               label="Database"
               :options="user.databases"
               v-model="currentDatabase"
+              @input="createPage"
             />
           </div>
 
@@ -461,12 +462,14 @@
 import MyMenu from "components/MyMenu";
 import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
+import crudMixins from "src/mixins/crudMixins";
+import inputHandlingMixins from "src/mixins/inputHandlingMixins";
 
 import { mapState } from "vuex";
 
 export default {
   name: "Translator",
-  mixins: [myMixins],
+  mixins: [myMixins, crudMixins, inputHandlingMixins],
   components: { MyMenu },
   data() {
     return {
@@ -649,6 +652,11 @@ export default {
       this.displayData = this.allData.filter((e) => e.page === filterString);
     },
 
+    // used for scroll watching
+    onTranslatorScroll(info) {
+      this.scrollDown = info.direction === "down";
+    },
+
     // Add new item with all fields filled
     addItemChanged() {
       // check if all three fields are filled and switch bool
@@ -700,38 +708,6 @@ export default {
       } else {
         this.deletePageNotAllowed = true;
       }
-    },
-
-    // filter display data by searched keyword
-    // checks: page, key, text from, and text to
-    searchFilter() {
-      const s = this.searchText.toLowerCase();
-
-      // default to tab if search is empty
-      if (s === "") {
-        this.setDisplayData(this.tab);
-        this.noDisplayData();
-        return;
-      }
-      // search page, key, and translatedText.
-      this.displayData = this.allData.filter(
-        (e) =>
-          e.page.toLowerCase() === s ||
-          e.key.toLowerCase() === s ||
-          e.translatedText[this.user.languageTo]?.toLowerCase() === s ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase() === s ||
-          e.page.toLowerCase().includes(s) ||
-          e.key.toLowerCase().includes(s) ||
-          e.translatedText[this.user.languageTo]?.toLowerCase().includes(s) ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase().includes(s)
-      );
-
-      this.noDisplayData();
-    },
-
-    // used for scroll watching
-    onTranslatorScroll(info) {
-      this.scrollDown = info.direction === "down";
     },
 
     // updates frontend data
@@ -802,40 +778,8 @@ export default {
     ...mapState("Auth", ["user"]),
   },
   async created() {
-    let firstTab;
-    try {
-      // setting page tab values from backend
-      const pages = await this.$axios.get("/apiV1/get_pages");
-      this.filteredData = pages.data.map(function(item) {
-        return item.name;
-      });
-      firstTab = this.filteredData[0];
-      this.tab = firstTab;
-
-      // grabbing translations from backend and parsing editItemData
-      const res = await this.$axios.get("/apiV1/get_translations");
-      this.allData = res.data;
-
-      if (!!this.allData.length) {
-        this.editItemData = JSON.parse(JSON.stringify(this.allData[0]));
-        this.currentKey = this.editItemData.key;
-      }
-
-      this.noDisplayData();
-
-      // deep clone of data for change tracking
-      this.allData.forEach((item) => {
-        const clone = JSON.parse(JSON.stringify(item));
-        this.currentData.push(clone);
-      });
-
-      // filter for first load
-      this.setDisplayData(firstTab);
-      this.currentDatabase = this.user.databases[0];
-    } catch (err) {
-      this.noDisplayData();
-      this.serverError(err);
-    }
+    this.currentDatabase = this.user.currentDatabase || this.user.databases[0];
+    this.createPage();
   },
 };
 </script>
@@ -912,14 +856,6 @@ export default {
   &:active {
     background-color: rgba(128, 128, 128, 0.7);
   }
-}
-
-.empty-texts {
-  user-select: none; /* supported by Chrome and Opera */
-  -webkit-user-select: none; /* Safari */
-  -khtml-user-select: none; /* Konqueror HTML */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
 }
 
 .input-fields {

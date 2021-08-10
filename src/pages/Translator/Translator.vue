@@ -52,6 +52,7 @@
                 label="Database"
                 :options="user.databases"
                 v-model="currentDatabase"
+                @input="createPage"
               />
             </div>
           </div>
@@ -152,17 +153,9 @@
               class="q-my-xl q-py-xl justify-center"
             >
               <div class="loader q-ma-none" :class="{ hidden: !isLoading }" />
-              <div
-                class="text-h1 text-center text-grey-4"
-                :class="{ hidden: !isNoMatches }"
-              >
-                No Matches
-              </div>
-              <div
-                class="text-h1 text-center text-grey-4"
-                :class="{ hidden: !isNoEntries }"
-              >
-                Empty
+              <div class="text-h1 text-center text-grey-4 empty-texts">
+                {{ noDisplayText }}
+                <div class="text-h4 q-pt-sm">{{ noDisplaySubtitle }}</div>
               </div>
             </div>
           </div>
@@ -200,11 +193,13 @@
 import MyMenu from "components/MyMenu";
 import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
+import crudMixins from "src/mixins/crudMixins";
+import inputHandlingMixins from "src/mixins/inputHandlingMixins";
 import { mapState } from "vuex";
 
 export default {
   name: "Translator",
-  mixins: [myMixins],
+  mixins: [myMixins, crudMixins, inputHandlingMixins],
   components: { MyMenu },
   data() {
     return {
@@ -222,10 +217,10 @@ export default {
       translateFrom: "",
 
       isLoading: false,
-      isNoEntries: false,
-      isNoMatches: false,
       isIncomplete: false,
       currentDatabase: "",
+      noDisplayText: "",
+      noDisplaySubtitle: "",
     };
   },
 
@@ -285,36 +280,7 @@ export default {
       );
       this.isIncomplete = true;
 
-      this.noEntries();
-    },
-
-    // set displayData based on search and also hides tabs
-    searchFilter() {
-      const s = this.searchText.toLowerCase();
-      // default to tab if search is empty
-      if (s === "") {
-        this.setDisplayData(this.tab);
-        return;
-      }
-
-      // search page, key, and translatedText.
-      this.displayData = this.allData.filter(
-        (e) =>
-          e.page.toLowerCase() === s ||
-          e.key.toLowerCase() === s ||
-          e.translatedText[this.user.languageTo]?.toLowerCase() === s ||
-          e.translatedText[this.translateFrom]?.toLowerCase() === s ||
-          e.page.toLowerCase().includes(s) ||
-          e.key.toLowerCase().includes(s) ||
-          e.translatedText[this.user.languageTo]?.toLowerCase().includes(s) ||
-          e.translatedText[this.translateFrom]?.toLowerCase().includes(s)
-      );
-
-      // loading animation
-      this.loadMatches();
-
-      // no match output
-      this.noMatches();
+      this.noDisplayData();
     },
 
     // returns unmodified languageFrom text value
@@ -340,36 +306,32 @@ export default {
       }
     },
 
+    // Loading animation to show feedback while waiting for match generation
+    loadMatches() {
+      if (!this.displayData.length) {
+        this.isLoading = true;
+      }
+    },
+
     // used for scroll watching
     onTranslatorScroll(info) {
       this.scrollDown = info.direction === "down";
     },
 
-    // Displays no match screen if search does not find anything to match
-    noMatches() {
-      if (!this.displayData.length) {
-        this.isLoading = false;
-        this.isNoEntries = false;
-        this.isNoMatches = true;
+    noDisplayData() {
+      let text = "";
+      let subtitle = "";
+      if (!this.filteredData.length) {
+        text = "Nothing to Translate";
+        subtitle = "Admin hasn't set any translations here";
+      } else if (this.searchText !== "") {
+        text = "No Matches";
+      } else if (!this.displayData.length) {
+        text = "Empty";
       }
-    },
 
-    // Displays no entries screen if search does not find any entries
-    noEntries() {
-      if (!this.displayData.length) {
-        this.isLoading = false;
-        this.isNoEntries = true;
-        this.isNoMatches = false;
-      }
-    },
-
-    // Loading animation to show feedback while waiting for match generation
-    loadMatches() {
-      if (!this.displayData.length) {
-        this.isLoading = true;
-        this.isNoEntries = false;
-        this.isNoMatches = false;
-      }
+      this.noDisplayText = text;
+      this.noDisplaySubtitle = subtitle;
     },
   },
   computed: {
@@ -379,36 +341,9 @@ export default {
     // window.onbeforeunload = function() {
     //   return "";
     // };
-
-    let firstTab;
     this.translateFrom = this.user.languageFrom;
-    try {
-      // setting page tab values from backend
-      const pages = await this.$axios.get("/apiV1/get_pages");
-      this.filteredData = pages.data.map(function(item) {
-        return item.name;
-      });
-      firstTab = this.filteredData[0];
-      this.tab = firstTab;
-
-      // grabbing translations from backend
-      const res = await this.$axios.get("/apiV1/get_translations");
-      this.allData = res.data;
-
-      // deep clone of data for change tracking
-      this.allData.forEach((item) => {
-        const clone = JSON.parse(JSON.stringify(item));
-        this.currentData.push(clone);
-      });
-
-      // filter for first load
-      this.setDisplayData(firstTab);
-
-      this.currentDatabase = this.user.databases[0];
-    } catch (err) {
-      this.noEntries();
-      this.serverError(err);
-    }
+    this.currentDatabase = this.user.currentDatabase || this.user.databases[0];
+    this.createPage();
   },
 };
 </script>
