@@ -107,9 +107,7 @@
                   class="bg-white input-transition"
                   :class="{ 'border-input': changedData.get(item.key) }"
                   v-model="item.translatedText[user.languageTo]"
-                  @keyup="
-                    storeChanges(item.key, item.translatedText[user.languageTo])
-                  "
+                  @keyup="storeChanges(item)"
                   autogrow
                 >
                   <template v-slot:append>
@@ -234,16 +232,27 @@ export default {
             Object.fromEntries(this.changedData)
           );
 
+          const res2 = await this.$axios.post(
+            "/apiV1/update_language_translations",
+            Object.fromEntries(this.changedData)
+          );
+
           this.$q.notify({
             message: "Updated Translations",
           });
+
           // fix currentData on update
           for (const [key, value] of this.changedData) {
             const updateDataObject = this.currentData.find(
               (item) => item.key === key
             );
-            updateDataObject.translatedText[this.user.languageTo] = value;
+            updateDataObject.translatedText[this.user.languageTo] =
+              value.translation;
           }
+          // fix allData -> displayData on update
+          this.isIncomplete
+            ? this.incompleteFilter()
+            : this.setDisplayData(this.tab);
 
           this.changedData.clear();
           this.changedDataSize = this.changedData.size;
@@ -292,18 +301,20 @@ export default {
 
     // takes current key and input text changes and tracks them.
     // if changes, return to original state, item is removed from tracking.
-    storeChanges(key, changes) {
-      const current = this.currentData.find((item) => item.key === key)
+    storeChanges(item) {
+      const key = item.key;
+      const page = item.page;
+      const changes = item.translatedText[this.user.languageTo];
+      const current = this.currentData.find((e) => e.key === key)
         .translatedText[this.user.languageTo];
       if (changes === current) {
         // check and remove from Map
         this.changedData.delete(key);
-        this.changedDataSize = this.changedData.size;
       } else {
         // add to map
-        this.changedData.set(key, changes);
-        this.changedDataSize = this.changedData.size;
+        this.changedData.set(key, { page: page, translation: changes });
       }
+      this.changedDataSize = this.changedData.size;
     },
 
     // Loading animation to show feedback while waiting for match generation

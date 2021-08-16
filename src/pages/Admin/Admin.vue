@@ -533,20 +533,12 @@ export default {
           sendData
         );
 
-        // TODO: fix update display data on frontend on page change
-        if (this.currentPage !== this.editItemData.page) {
-          // this.deleteOneFromArray(this.allData, this.deleteItemKey);
-          // this.deleteOneFromArray(this.currentData, this.deleteItemKey);
-        }
+        this.updateOneFromArray(this.allData, this.currentKey);
+        this.updateOneFromArray(this.currentData, this.currentKey);
         this.setDisplayData(this.tab);
-        this.noDisplayData();
       } catch (err) {
         this.serverError(err);
       }
-
-      // fix currentData and allData on update
-      this.fixData(this.currentData);
-      this.fixData(this.allData);
 
       this.$q.notify({
         message: "Translation Updated",
@@ -569,7 +561,6 @@ export default {
         this.deleteOneFromArray(this.allData, this.deleteItemKey);
         this.deleteOneFromArray(this.currentData, this.deleteItemKey);
         this.setDisplayData(this.tab);
-        this.noDisplayData();
 
         this.$q.notify({
           message: "Translation Deleted",
@@ -605,6 +596,7 @@ export default {
 
     // creates new page filter
     async addNewPage() {
+      this.addPageData = this.addPageData.toLowerCase();
       try {
         this.filteredData.push(this.addPageData);
         const res = await this.$axios.post("/apiV1/add_page", {
@@ -614,7 +606,6 @@ export default {
           this.tab = this.addPageData;
         }
         this.setDisplayData(this.tab);
-        this.noDisplayData();
         this.clearPage();
       } catch (err) {
         this.clearPage();
@@ -634,6 +625,12 @@ export default {
           const res = await this.$axios.delete("/apiV1/delete_page", {
             data: { name: this.deletePageData },
           });
+          const res2 = await this.$axios.delete(
+            "/apiV1/admin_delete_language_page",
+            {
+              data: { page: this.deletePageData },
+            }
+          );
 
           this.noDisplayData();
           this.clearPage();
@@ -657,15 +654,28 @@ export default {
         });
 
         // Also change all pages for all translation in page
-        const res2 = await this.$axios.post("/apiV1/admin_update_page_name", {
+        const res2 = await this.$axios.post("/apiV1/admin_update_page", {
           oldPageName: this.deletePageData,
           newPageName: this.renamePageData,
         });
 
+        const res3 = await this.$axios.post(
+          "/apiV1/admin_update_language_page",
+          {
+            oldName: this.deletePageData,
+            newName: this.renamePageData,
+          }
+        );
+
+        this.myDialog(
+          "Attention",
+          `Renaming a page requires updating the page name 
+          manually at other projects where it is used`
+        );
+
         this.fixPageData(this.allData);
         this.fixPageData(this.currentData);
         this.setDisplayData(this.tab);
-
         this.clearPage();
       } catch (err) {
         this.serverError(err);
@@ -675,6 +685,7 @@ export default {
     // Passes in the current page and displays all the data for the specific page
     setDisplayData(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
+      this.noDisplayData();
     },
 
     // used for scroll watching
@@ -724,6 +735,16 @@ export default {
       arrData.splice(i, 1);
     },
 
+    updateOneFromArray(arrData, key) {
+      const item = arrData.find((e) => e.key === key);
+      item.page = this.editItemData.page;
+      item.key = this.editItemData.key;
+      item.description = this.editItemData.description;
+      item.translatedText[
+        this.user.languageFrom
+      ] = this.editItemData.translatedText[this.user.languageFrom];
+    },
+
     // If the page is empty, allow user to delete
     deletePageAllow(page) {
       const checkData = this.allData.filter((e) => e.page === page);
@@ -733,17 +754,6 @@ export default {
       } else {
         this.deletePageNotAllowed = true;
       }
-    },
-
-    // updates frontend data
-    fixData(arrData) {
-      const updateDataObject = arrData.find(
-        (item) => item.key === this.currentKey
-      );
-      Object.assign(
-        updateDataObject,
-        JSON.parse(JSON.stringify(this.editItemData))
-      );
     },
 
     // updates frontend page data during rename

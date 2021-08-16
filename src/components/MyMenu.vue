@@ -70,7 +70,7 @@
             }"
             color="white"
           />
-          <!-- TODO: add dropdown here -->
+          <!-- TODO: add dropdown here for user logout/settings? -->
 
           <!-- <q-icon
             name="person"
