@@ -482,6 +482,7 @@ export default {
       currentData: [],
       filteredData: [],
       currentKey: "",
+      currentPage: "",
       currentDatabase: "",
       searchText: "",
       isLoading: false,
@@ -493,6 +494,7 @@ export default {
       editItemSubmit: false,
       deleteItem: false,
       deleteItemKey: "",
+      deleteItemPage: "",
       addNewItemPage: "",
       addPage: false,
       addPageData: "",
@@ -519,12 +521,25 @@ export default {
     async submitChanges() {
       const sendData = {
         currentKey: this.currentKey,
+        currentPage: this.currentPage,
         data: this.editItemData,
       };
 
       let res;
       try {
         res = await this.$axios.post("/apiV1/admin_edit_translation", sendData);
+        res = await this.$axios.post(
+          "/apiV1/admin_edit_language_translation",
+          sendData
+        );
+
+        // TODO: fix update display data on frontend on page change
+        if (this.currentPage !== this.editItemData.page) {
+          // this.deleteOneFromArray(this.allData, this.deleteItemKey);
+          // this.deleteOneFromArray(this.currentData, this.deleteItemKey);
+        }
+        this.setDisplayData(this.tab);
+        this.noDisplayData();
       } catch (err) {
         this.serverError(err);
       }
@@ -545,6 +560,10 @@ export default {
         const res = await this.$axios.delete(
           "/apiV1/admin_delete_translation",
           { data: { key: this.deleteItemKey } }
+        );
+        const res2 = await this.$axios.delete(
+          "/apiV1/admin_delete_language_translation",
+          { data: { key: this.deleteItemKey, page: this.deleteItemPage } }
         );
 
         this.deleteOneFromArray(this.allData, this.deleteItemKey);
@@ -567,6 +586,12 @@ export default {
           "/apiV1/admin_new_translation",
           this.addItemData
         );
+
+        const res2 = await this.$axios.post(
+          "/apiV1/admin_new_language_translation",
+          this.addItemData
+        );
+
         this.allData.push(this.addItemData);
         this.currentData.push(this.addItemData);
         this.setDisplayData(this.tab);
@@ -739,6 +764,7 @@ export default {
     sendItem(item) {
       this.editItem = true;
       this.currentKey = item.key;
+      this.currentPage = item.page;
       this.editItemData = JSON.parse(JSON.stringify(item));
     },
 
@@ -746,6 +772,7 @@ export default {
     sendDeleteItem(item) {
       this.deleteItem = true;
       this.deleteItemKey = item.key;
+      this.deleteItemPage = item.page;
     },
 
     // Check if currentData has changed in input fields
