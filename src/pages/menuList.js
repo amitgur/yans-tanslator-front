@@ -30,6 +30,12 @@ const menuList = [
     link: "/admin",
     profile: "admin",
   },
+  {
+    type: "link",
+    label: "Users",
+    link: "/users",
+    profile: "admin",
+  },
 ];
 
 export default menuList;

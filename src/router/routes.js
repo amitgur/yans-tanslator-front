@@ -35,6 +35,11 @@ const routes = [
     meta: { requiresAuth: true },
     component: () => import("pages/Admin/Admin"),
   },
+  {
+    path: "/users",
+    meta: { requiresAuth: true },
+    component: () => import("pages/AdminUsers/AdminUsers"),
+  },
 ];
 
 // Always leave this as last one

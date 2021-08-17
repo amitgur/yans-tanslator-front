@@ -1,7 +1,6 @@
-import extractResponseMessage from "assets/js/extractResponseMessage";
-
 export default {
   methods: {
+    // When creating a new page, set the current DB to display the current data
     async createPage() {
       try {
         const db = await this.$axios.post("/apiV1/set_current_db", {

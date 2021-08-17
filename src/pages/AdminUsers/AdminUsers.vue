@@ -26,63 +26,8 @@
                 <q-icon name="search" />
               </template>
             </q-input>
-            <q-select
-              class="q-ml-xl q-py-md"
-              style="min-width: 200px"
-              outlined
-              label="Database"
-              :options="user.databases"
-              v-model="currentDatabase"
-              @input="createPage"
-            />
           </div>
 
-          <!-- tabs-page selector -->
-          <div
-            :class="{ hidden: searchText !== '' }"
-            style="transition: all 0.5s"
-          >
-            <q-card>
-              <q-tabs
-                class="bg-primary text-white"
-                v-model="tab"
-                align="justify"
-                inline-label
-              >
-                <q-tab
-                  v-for="page in filteredData"
-                  :key="page"
-                  :name="page"
-                  :label="page"
-                  @click="setDisplayData(page)"
-                >
-                  <q-btn-dropdown class="tab-dropdown" size="sm" unelevated>
-                    <q-list>
-                      <q-item
-                        clickable
-                        v-close-popup
-                        @click="deletePageAllow(page)"
-                      >
-                        <q-item-section>
-                          <q-item-label>Delete </q-item-label>
-                        </q-item-section>
-                      </q-item>
-
-                      <q-item
-                        clickable
-                        v-close-popup
-                        @click="renamePageAllow(page)"
-                      >
-                        <q-item-section>
-                          <q-item-label>Rename</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-btn-dropdown>
-                </q-tab>
-              </q-tabs>
-            </q-card>
-          </div>
           <!-- table content -->
           <div class="q-pt-md">
             <div
@@ -104,13 +49,13 @@
               <div class="col-1">Delete</div>
             </div>
           </div>
-          <div
+          <!-- <div
             v-for="item in displayData"
             :key="item.key"
             class="row justify-center items-center q-py-md q-my-sm bg-blue-grey-1"
             style="border-radius: 0.4em"
           >
-            <!-- source text -->
+            source text
             <div class="col-3">
               <div class="q-px-lg q-py-md q-mx-md">
                 <div>
@@ -149,7 +94,7 @@
                 @click="sendDeleteItem(item)"
               />
             </div>
-          </div>
+          </div> -->
           <div
             :class="{ hidden: displayData.length > 0 }"
             class="q-my-xl q-py-xl justify-center"
@@ -565,8 +510,8 @@ export default {
       });
     },
 
-    // Deleting entire item from database
-    // This is permanent
+    // deleting entire item from database
+    // this is permanent
     async destroyItem() {
       try {
         const res = await this.$axios.delete(
@@ -590,7 +535,7 @@ export default {
       }
     },
 
-    // Sending new translation item to backend
+    // sending new translation item to backend
     async submitAddItem() {
       try {
         const res = await this.$axios.post(

@@ -1,8 +1,6 @@
-import extractResponseMessage from "assets/js/extractResponseMessage";
-
 export default {
   methods: {
-    // filter display data by searched keyword
+    // Filter display data by searched keyword
     // checks: page, key, text from, and text to
     searchFilter() {
       const s = this.searchText.toLowerCase();
@@ -13,7 +11,7 @@ export default {
         this.noDisplayData();
         return;
       }
-      // search page, key, and translatedText.
+      // search page, key, and translatedText
       this.displayData = this.allData.filter(
         (e) =>
           e.page.toLowerCase() === s ||
