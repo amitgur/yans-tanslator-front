@@ -95,6 +95,7 @@ export default {
     };
   },
   methods: {
+    // Checks all necessary credentials in order to sign up
     async signUp() {
       if (!this.username || !this.password || !this.name || !this.secretWord) {
         this.myDialog("Some of the fields are missing");
@@ -142,6 +143,7 @@ export default {
       }
     },
 
+    // Routes to the specific page based on permissions
     async autoLogin(user) {
       try {
         const response = await this.$axios.post("/apiV1/login_user", user);

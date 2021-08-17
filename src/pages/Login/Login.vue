@@ -71,6 +71,7 @@ export default {
     };
   },
   methods: {
+    // Checks for all the necessary credentials to login
     async login() {
       if (!this.username || !this.password) {
         this.myDialog("Some of the fields are missing");
@@ -99,6 +100,8 @@ export default {
   computed: {
     ...mapState("Auth", ["isSignIn"]),
   },
+
+  // Routes to landing page from sign in
   created() {
     if (this.isSignIn) {
       this.$router.push("/");

@@ -44,6 +44,7 @@ export default {
     };
   },
   methods: {
+    // Routes to translator page upon login
     async goToTranslator() {
       let path = "/translator";
 
@@ -66,6 +67,8 @@ export default {
   computed: {
     ...mapState("Auth", ["user", "isSignIn"]),
   },
+
+  // Stores the sign in
   async created() {
     await this.$store.dispatch("Auth/checkSignIn");
   },

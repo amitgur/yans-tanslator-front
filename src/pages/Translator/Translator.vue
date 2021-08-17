@@ -267,7 +267,7 @@ export default {
       }
     },
 
-    // handle changing from language
+    // Handle changing from language
     async togglePreferredLanguageFrom() {
       try {
         const res = await this.$axios.post("/apiV1/update_language", {
@@ -299,15 +299,15 @@ export default {
       this.noDisplayData();
     },
 
-    // returns unmodified languageFrom text value
+    // Returns unmodified languageFrom text value
     currentFromText(key) {
       return this.currentData.find((e) => e.key === key).translatedText[
         this.translateFrom
       ];
     },
 
-    // takes current key and input text changes and tracks them.
-    // if changes, return to original state, item is removed from tracking.
+    // Takes current key and input text changes and tracks them.
+    // If changes, return to original state and the item is removed from tracking.
     storeChanges(item) {
       const key = item.key;
       const page = item.page;
@@ -331,11 +331,12 @@ export default {
       }
     },
 
-    // used for scroll watching
+    // Used for scroll watching
     onTranslatorScroll(info) {
       this.scrollDown = info.direction === "down";
     },
 
+    // When there is no data to display, this shows a welcome screen with instructions to begin
     noDisplayData() {
       let text = "";
       let subtitle = "";
@@ -355,10 +356,9 @@ export default {
   computed: {
     ...mapState("Auth", ["user"]),
   },
+
+  // Sets the current database and translated language and creates a page
   async created() {
-    // window.onbeforeunload = function() {
-    //   return "";
-    // };
     this.translateFrom = this.user.languageFrom;
     this.currentDatabase = this.user.currentDatabase || this.user.databases[0];
     this.createPage();

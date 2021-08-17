@@ -482,7 +482,7 @@ export default {
   },
 
   methods: {
-    // Send data edit to backend
+    // Sends data edit to backend
     async submitChanges() {
       const sendData = {
         currentKey: this.currentKey,
@@ -510,8 +510,8 @@ export default {
       });
     },
 
-    // deleting entire item from database
-    // this is permanent
+    // Deletes entire item from database
+    // This is permanent
     async destroyItem() {
       try {
         const res = await this.$axios.delete(
@@ -535,7 +535,7 @@ export default {
       }
     },
 
-    // sending new translation item to backend
+    // Sends new translation item to backend
     async submitAddItem() {
       try {
         const res = await this.$axios.post(
@@ -582,8 +582,8 @@ export default {
       }
     },
 
-    // deletes page filter
-    // only allowed if page filter has no entries
+    // Deletes page filter
+    // Only allowed if page filter has no entries
     async destroyPage() {
       if (this.deletePage) {
         try {
@@ -609,7 +609,7 @@ export default {
       }
     },
 
-    // renames page and all translations in page
+    // Renames page and all translations in page
     async changePageName() {
       try {
         const i = this.filteredData.indexOf(this.deletePageData);
@@ -651,14 +651,14 @@ export default {
       this.noDisplayData();
     },
 
-    // used for scroll watching
+    // Used for scroll watching
     onTranslatorScroll(info) {
       this.scrollDown = info.direction === "down";
     },
 
     // Add new item with all fields filled
     addItemChanged() {
-      // check if all three fields are filled and switch bool
+      // Check if all three fields are filled and switch bool
       this.addItemSubmit =
         this.addItemData.key &&
         this.addItemData.translatedText.en &&
@@ -719,7 +719,7 @@ export default {
       }
     },
 
-    // updates frontend page data during rename
+    // Updates frontend page data during rename
     fixPageData(arrData) {
       arrData.forEach((item) => {
         if (item.page === this.deletePageData) item.page = this.renamePageData;
@@ -758,6 +758,7 @@ export default {
       this.editItemSubmit = current !== changed;
     },
 
+    // When there is no data to display, this shows a welcome screen with instructions to begin
     noDisplayData() {
       let text = "";
       let subtitle = "";
@@ -777,6 +778,8 @@ export default {
   computed: {
     ...mapState("Auth", ["user"]),
   },
+
+  // Sets the current database and creates a page
   async created() {
     this.currentDatabase = this.user.currentDatabase || this.user.databases[0];
     this.createPage();
