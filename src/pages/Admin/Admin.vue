@@ -602,6 +602,10 @@ export default {
         const res = await this.$axios.post("/apiV1/add_page", {
           name: this.addPageData,
         });
+        const res2 = await this.$axios.post("/apiV1/admin_add_language_page", {
+          page: this.addPageData,
+        });
+
         if (this.filteredData.length === 1) {
           this.tab = this.addPageData;
         }
@@ -668,7 +672,6 @@ export default {
         );
 
         this.myDialog(
-          "Attention",
           `Renaming a page requires updating the page name 
           manually at other projects where it is used`
         );

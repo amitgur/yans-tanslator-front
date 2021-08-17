@@ -76,7 +76,11 @@
                   @click="setDisplayData(page)"
                 />
                 <!-- filter incomplete fields -->
-                <q-tab class="bg-blue text-subtitle2" @click="incompleteFilter">
+                <q-tab
+                  class="text-subtitle2"
+                  @click="incompleteFilter"
+                  :class="noIncompletes ? 'bg-grey-7' : 'bg-blue'"
+                >
                   Incomplete
                 </q-tab>
               </q-tabs>
@@ -216,6 +220,7 @@ export default {
 
       isLoading: false,
       isIncomplete: false,
+      noIncompletes: false,
       currentDatabase: "",
       noDisplayText: "",
       noDisplaySubtitle: "",
@@ -276,6 +281,7 @@ export default {
 
     // Takes a page name and sets displayData
     setDisplayData(filterString) {
+      this.incompleteFilter();
       this.displayData = this.allData.filter((e) => e.page === filterString);
       this.isIncomplete = false;
     },
@@ -287,6 +293,7 @@ export default {
           e.translatedText[this.user.languageTo] === "" ||
           e.translatedText[this.user.languageTo] === undefined
       );
+      this.noIncompletes = this.displayData.length === 0;
       this.isIncomplete = true;
 
       this.noDisplayData();
