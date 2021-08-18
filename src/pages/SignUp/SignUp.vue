@@ -43,13 +43,6 @@
                 />
               </template>
             </q-input>
-            <p class="hint">Select language to translate to</p>
-            <q-select
-              filled
-              v-model="languageTo"
-              :options="languageList"
-              label="Language"
-            />
             <q-input
               square
               filled
@@ -116,10 +109,6 @@ export default {
         this.myDialog("Check again your secret word");
         return;
       }
-      if (!this.languageTo) {
-        this.myDialog("Please select a language to translate to");
-        return;
-      }
       // register user
       const user = {
         username: this.username,
@@ -150,7 +139,7 @@ export default {
         // auto-login
         this.$store.dispatch("Auth/signIn", response.data);
         user.profile === "admin"
-          ? this.$router.push("/admin-translator")
+          ? this.$router.push("/admin")
           : this.$router.push("/translator");
       } catch (err) {
         this.serverError(err);
