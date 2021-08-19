@@ -473,8 +473,9 @@
             v-close-popup
             @click="changePageName()"
           />
-        </q-card-actions> </q-card
-    ></q-dialog>
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-layout>
 </template>
 

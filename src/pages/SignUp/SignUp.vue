@@ -71,7 +71,6 @@
 
 <script>
 import myMixins from "src/mixins/myMixins";
-import languageList from "src/pages/languageList";
 
 export default {
   name: "SignUp",
@@ -83,8 +82,6 @@ export default {
       name: null,
       secretWord: null,
       isPwd: true,
-      languageTo: languageList[0],
-      languageList,
     };
   },
   methods: {
@@ -114,7 +111,6 @@ export default {
         username: this.username,
         password: this.password,
         name: this.name,
-        languageTo: this.languageTo.tag,
       };
       if (this.secretWord === process.env.ADMIN_WORD) {
         user.profile = "admin";
