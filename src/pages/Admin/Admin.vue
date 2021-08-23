@@ -1,6 +1,6 @@
 <template>
   <q-layout view="lHh lpr lFf">
-    <q-scroll-observer @scroll="onTranslatorScroll" />
+    <q-scroll-observer />
     <my-menu :menu-list="menuList" language="he" />
     <q-page-container>
       <q-page class="items-center">
@@ -134,18 +134,26 @@
               </div>
             </div>
             <div class="col-1" style="text-align: center">
-              <q-icon
-                class="crud-button"
-                name="edit"
+              <q-btn
+                color="grey-7"
+                icon-right="edit"
+                size="lg"
+                class="q-pa-xs"
+                flat
                 rounded
+                dense
                 @click="sendItem(item)"
               />
             </div>
             <div class="col-1">
-              <q-icon
-                class="crud-button"
-                name="delete"
+              <q-btn
+                color="grey-7"
+                icon-right="delete"
+                size="lg"
+                class="q-pa-xs"
+                flat
                 rounded
+                dense
                 @click="sendDeleteItem(item)"
               />
             </div>
@@ -169,7 +177,7 @@
             color="accent"
             icon="add"
             direction="left"
-            class="text-subtitle1 update-button-transition update-button text-bold text-white"
+            class="text-subtitle1 update-button text-bold text-white"
           >
             <q-fab-action
               color="primary"
@@ -494,8 +502,6 @@ export default {
   components: { MyMenu },
   data() {
     return {
-      scrollOn: false,
-      scrollDown: false,
       menuList,
       tab: "",
       allData: [],
@@ -538,7 +544,8 @@ export default {
   },
 
   methods: {
-    // Send data edit to backend
+    // When EDITTING a single translation,
+    // this updates the data item
     async submitChanges() {
       const sendData = {
         currentKey: this.currentKey,
@@ -566,8 +573,8 @@ export default {
       });
     },
 
-    // Deleting entire item from database
-    // This is permanent
+    // When DELETING a translation,
+    // this will delete the item permanently
     async destroyItem() {
       try {
         const res = await this.$axios.delete(
@@ -591,7 +598,8 @@ export default {
       }
     },
 
-    // Sending new translation item to backend
+    // When ADDING a translation,
+    // this will generate a new item
     async submitAddItem() {
       try {
         const res = await this.$axios.post(
@@ -615,7 +623,8 @@ export default {
       }
     },
 
-    // creates new page filter
+    // When ADDING a page,
+    // this generates a page filter
     async addNewPage() {
       this.addPageData = this.addPageData.toLowerCase();
       try {
@@ -638,8 +647,8 @@ export default {
       }
     },
 
-    // Deletes page filter
-    // Only allowed if page filter has no entries
+    // When DELETING a page,
+    // this will delete if permanently ONLY IF the page is empty
     async destroyPage() {
       if (this.deletePage) {
         try {
@@ -665,7 +674,8 @@ export default {
       }
     },
 
-    // Renames page and all translations in page
+    // When RENAMING a page,
+    // this will modify the page name for all translations as well
     async changePageName() {
       try {
         const i = this.filteredData.indexOf(this.deletePageData);
@@ -701,20 +711,16 @@ export default {
       }
     },
 
-    // Passes in the current page and displays all the data for the specific page
+    // When page name is passed in,
+    // this filters and displays all the data for the specific page
     setDisplayData(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
       this.noDisplayData();
     },
 
-    // Used for scroll watching
-    onTranslatorScroll(info) {
-      this.scrollDown = info.direction === "down";
-    },
-
-    // Add new item with all fields filled
+    // When ADDING a new translation,
+    // this will check that the item values are filled and not duplicates
     addItemChanged() {
-      // Check if all three fields are filled and switch bool
       this.addItemSubmit =
         this.addItemData.key &&
         this.addItemData.translatedText.en &&
@@ -722,7 +728,8 @@ export default {
         !this.allData.find((item) => item.key === this.addItemData.key);
     },
 
-    // Clears data from input field upon adding new items
+    // When the addItemData is used or cancelled,
+    // this clears the data so that it isn't persistent
     clearAddItem() {
       this.addItemData = {
         key: null,
@@ -735,26 +742,29 @@ export default {
       this.addItemSubmit = false;
     },
 
-    // Clears data from input field in each page component
+    // This clears data from input field in each page dialog
     clearPage() {
       this.addPageData = "";
       this.renamePageData = "";
       this.deletePageData = "";
     },
 
-    // Change boolean value to let user rename the page
+    // When an admin wants to RENAME a page,
+    // this handles opening the dialog
     renamePageAllow(page) {
       this.renamePage = true;
       this.deletePageData = page;
     },
 
-    // Updating front end data
+    // When DELETING a translation,
+    // this deletes the frontend data item
     deleteOneFromArray(arrData, key) {
       const i = arrData.findIndex((e) => e.key === key);
       arrData.splice(i, 1);
     },
 
-    // Updating front end data
+    // When EDITTING a translation,
+    // this updates the frontend data item
     updateOneFromArray(arrData, key) {
       const item = arrData.find((e) => e.key === key);
       item.page = this.editItemData.page;
@@ -765,7 +775,8 @@ export default {
       ] = this.editItemData.translatedText[this.user.languageFrom];
     },
 
-    // If the page is empty, allow user to delete
+    // When an admin wants to DELETE a page,
+    // this confirms if a page can be deleted or if it still has data sorted to it
     deletePageAllow(page) {
       const checkData = this.allData.filter((e) => e.page === page);
       this.deletePageData = page;
@@ -776,36 +787,40 @@ export default {
       }
     },
 
-    // Updates frontend page data during rename
+    // When RENAMING a page
+    // this will update the frontend data for that page
     fixPageData(arrData) {
       arrData.forEach((item) => {
         if (item.page === this.deletePageData) item.page = this.renamePageData;
       });
     },
 
-    // Loading animation to show feedback while waiting for match generation
+    // Loading animation to show feedback while waiting for data to load
     loadMatches() {
       if (!this.displayData.length) {
         this.isLoading = true;
       }
     },
 
-    // Gets the item by key in order to edit
+    // When EDITTING an item,
+    // this sets and opens the data in a dialog
     sendItem(item) {
-      this.editItem = true;
       this.currentKey = item.key;
       this.currentPage = item.page;
       this.editItemData = JSON.parse(JSON.stringify(item));
+      this.editItem = true;
     },
 
-    // Gets the item by key in order to delete
+    // When DELETING a translation,
+    // this opens the delete dialog and sets the item to be deleted
     sendDeleteItem(item) {
       this.deleteItem = true;
       this.deleteItemKey = item.key;
       this.deleteItemPage = item.page;
     },
 
-    // Check if currentData has changed in input fields
+    // When EDITTING a translation,
+    // this checks and allows submit only if the data is any different
     checkChanges() {
       const current = JSON.stringify(
         this.currentData.find((item) => item.key === this.editItemData.key)
@@ -815,7 +830,8 @@ export default {
       this.editItemSubmit = current !== changed;
     },
 
-    // When there is no data to display, this shows a welcome screen with instructions to begin
+    // When there is no data to display,
+    // this shows a message for the user
     noDisplayData() {
       let text = "";
       let subtitle = "";
@@ -835,50 +851,17 @@ export default {
   computed: {
     ...mapState("Auth", ["user"]),
   },
-
-  // Sets the current database and creates a page
   async created() {
     this.currentDatabase = this.user.currentDatabase || this.user.databases[0];
+    // Called from "crudMixins.js"
     this.createPage();
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.class-red {
-  background-color: yellow;
-}
-.table-header {
-  height: 80px;
-  div {
-    background-color: #cdd2c6;
-    font-size: 14px;
-    text-transform: uppercase;
-    font-weight: bold;
-    height: 100%;
-    padding: 0;
-    margin: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-.update-button-transition {
-  transition: all 0.4s;
-}
-
 .update-button {
   opacity: 0.8;
-}
-
-.input-transition {
-  transition: all 0.4s ease;
-}
-
-.border-input {
-  box-shadow: 0 0 0 0.25em rgba(0, 128, 0, 0.3);
-  border-radius: 0.3em;
 }
 
 .indicator {
@@ -898,24 +881,6 @@ export default {
   height: 4em;
   margin: auto;
   animation: spin 1.6s cubic-bezier(0.72, 0.2, 0.2, 0.77) infinite;
-}
-
-.crud-button {
-  margin-left: auto;
-  cursor: pointer;
-  height: 50px;
-  width: 50px;
-  font-size: 1.7em;
-  transition: all 0.5s;
-  border-radius: 50%;
-  color: rgb(114, 114, 114);
-  &:hover {
-    color: black;
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-  &:active {
-    background-color: rgba(128, 128, 128, 0.7);
-  }
 }
 
 .input-fields {

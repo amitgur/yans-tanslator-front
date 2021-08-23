@@ -205,7 +205,6 @@ export default {
   components: { MyMenu },
   data() {
     return {
-      scrollOn: false,
       scrollDown: false,
       menuList,
       tab: "",
@@ -228,7 +227,8 @@ export default {
   },
 
   methods: {
-    // Handling sending updated translations to back end, checks this.changedData
+    // When EDITTING translation(s),
+    // this will update all data and does nothing if no data has been changed
     async updateTranslation() {
       try {
         if (this.changedDataSize > 0) {
@@ -267,7 +267,9 @@ export default {
       }
     },
 
-    // Handle changing from language
+    // This TOGGLES the user's languageFrom and is persistent.
+    // This currently works for English and Hebrew only but can be modified
+    // by changing the translateFrom options in the button toggle above.
     async togglePreferredLanguageFrom() {
       try {
         const res = await this.$axios.post("/apiV1/update_language", {
@@ -279,14 +281,16 @@ export default {
       }
     },
 
-    // Takes a page name and sets displayData
+    // When page name is passed in,
+    // this filters and displays all the data for the specific page
     setDisplayData(filterString) {
       this.incompleteFilter();
       this.displayData = this.allData.filter((e) => e.page === filterString);
       this.isIncomplete = false;
     },
 
-    // Filters through displayData and displays incomplete
+    // When FILTERING translations,
+    // this will filter and display ALL translations that are incomplete
     incompleteFilter() {
       this.displayData = this.allData.filter(
         (e) =>
@@ -299,15 +303,16 @@ export default {
       this.noDisplayData();
     },
 
-    // Returns unmodified languageFrom text value
+    // This returns an unmodified string for the languageFrom text value
     currentFromText(key) {
       return this.currentData.find((e) => e.key === key).translatedText[
         this.translateFrom
       ];
     },
 
-    // Takes current key and input text changes and tracks them.
-    // If changes, return to original state and the item is removed from tracking.
+    // When UPDATING translations,
+    // this will store any changes to identify if there's anything to update.
+    // This is NOT persistent.
     storeChanges(item) {
       const key = item.key;
       const page = item.page;
@@ -331,12 +336,13 @@ export default {
       }
     },
 
-    // Used for scroll watching
+    // Used for scroll watching for the update button animation
     onTranslatorScroll(info) {
       this.scrollDown = info.direction === "down";
     },
 
-    // When there is no data to display, this shows a welcome screen with instructions to begin
+    // When there is no data to display,
+    // this shows a message for the user
     noDisplayData() {
       let text = "";
       let subtitle = "";
@@ -356,36 +362,16 @@ export default {
   computed: {
     ...mapState("Auth", ["user"]),
   },
-
-  // Sets the current database and translated language and creates a page
   async created() {
     this.translateFrom = this.user.languageFrom;
     this.currentDatabase = this.user.currentDatabase || this.user.databases[0];
+    // Called from "crudMixins.js"
     this.createPage();
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.class-red {
-  background-color: yellow;
-}
-.table-header {
-  height: 80px;
-  div {
-    background-color: #cdd2c6;
-    font-size: 14px;
-    text-transform: uppercase;
-    font-weight: bold;
-    height: 100%;
-    padding: 0;
-    margin: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
 .update-button-transition {
   transition: all 0.4s;
 }

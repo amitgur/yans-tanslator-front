@@ -1,6 +1,6 @@
 <template>
   <q-layout view="lHh lpr lFf">
-    <q-scroll-observer @scroll="onTranslatorScroll" />
+    <q-scroll-observer />
     <my-menu :menu-list="menuList" language="he" />
     <q-page-container>
       <q-page class="items-center">
@@ -9,7 +9,6 @@
             <q-input
               bottom-slots
               v-model="searchText"
-              @keyup="searchFilter"
               label="Search"
               style="min-width: 400px"
             >
@@ -17,10 +16,7 @@
                 <q-icon
                   v-if="searchText"
                   name="cancel"
-                  @click.stop="
-                    searchText = '';
-                    searchFilter();
-                  "
+                  @click.stop="searchText = ''"
                   class="cursor-pointer"
                 />
                 <q-icon name="search" />
@@ -35,6 +31,23 @@
             row-key="username"
             table-header-class="text-white bg-primary"
           >
+            <template v-slot:body-cell-databases="props">
+              <q-td :props="props">
+                <!-- set database colors below -->
+                <span
+                  v-for="db in props.row.databases"
+                  :key="db"
+                  class="database-name"
+                  :class="{
+                    'bg-orange-1 text-orange': db === allDatabases[0],
+                    'bg-purple-1 text-purple': db === allDatabases[1],
+                    'bg-green-1 text-green': db === allDatabases[2],
+                    'bg-blue-1 text-blue': db === allDatabases[3],
+                  }"
+                  >{{ db }}</span
+                >
+              </q-td>
+            </template>
             <template v-slot:body-cell-edit="props">
               <q-td :props="props">
                 <q-btn
@@ -110,18 +123,15 @@ import MyMenu from "components/MyMenu";
 import menuList from "pages/menuList";
 import myMixins from "src/mixins/myMixins";
 import crudMixins from "src/mixins/crudMixins";
-import inputHandlingMixins from "src/mixins/inputHandlingMixins";
 import languageList from "src/pages/languageList";
 
 export default {
   name: "Translator",
-  mixins: [myMixins, crudMixins, inputHandlingMixins],
+  mixins: [myMixins, crudMixins],
   components: { MyMenu },
   data() {
     return {
       languageList,
-      scrollOn: false,
-      scrollDown: false,
       menuList,
       searchText: "",
       openEditDialog: false,
@@ -154,6 +164,9 @@ export default {
           field: "profile",
           align: "left",
           sortable: true,
+          format: (val) => {
+            return val.charAt(0).toUpperCase() + val.slice(1);
+          },
           classes: (row) => (row.profile === "admin" ? "text-accent" : ""),
         },
         {
@@ -205,17 +218,16 @@ export default {
   },
 
   methods: {
-    // Used for scroll watching
-    onTranslatorScroll(info) {
-      this.scrollDown = info.direction === "down";
-    },
-
+    // When EDITTING a user,
+    // this will return the entire language object for the dialog
     setLanguageTo() {
       this.currentLanguage = languageList.find(
         (item) => item.tag === this.dialogEditItem.languageTo
-      )?.label;
+      );
     },
 
+    // When EDITTING a user,
+    // this will set the current update data for a given user
     editItem(row) {
       this.dialogEditItem = row;
       this.openEditDialog = true;
@@ -225,11 +237,12 @@ export default {
       );
     },
 
+    // When EDITTING a user,
+    // this will update the data
     async sendEditItem() {
-      if (this.currentLanguage?.tag) {
-        this.dialogEditItem.languageTo = this.currentLanguage.tag;
-      }
-      this.dialogEditItem.databases = this.currentDatabases || [];
+      // Data to be seen in the dialog
+      this.dialogEditItem.languageTo = this.currentLanguage.tag;
+      this.dialogEditItem.databases = this.currentDatabases.sort();
 
       try {
         const res = await this.$axios.post("/apiV1/admin_update_user", {
@@ -242,8 +255,6 @@ export default {
       }
     },
   },
-
-  // Sets the current database and creates a page
   async created() {
     try {
       const res = await this.$axios.get("/apiV1/admin_get_users");
@@ -260,15 +271,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.class-red {
-  background-color: yellow;
-}
-
 .input-fields {
   width: 25em;
 }
 
-.input-fields-sm {
-  width: 15em;
+.database-name {
+  padding: 0.25em 0.6em;
+  margin: 0 0.15em;
+  border-radius: 1em;
+  background: rgba(128, 128, 128, 0.2);
 }
 </style>

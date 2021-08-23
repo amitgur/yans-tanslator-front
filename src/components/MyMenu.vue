@@ -135,7 +135,7 @@ export default {
   methods: {
     // change menu height on scroll
     onScroll(info) {
-      if (info.position > 50) {
+      if (info.position > 20) {
         this.headerHeight = 40;
         this.scrollOn = true;
       } else {

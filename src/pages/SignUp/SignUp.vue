@@ -1,6 +1,6 @@
 <template>
   <div
-    class="column q-pa-xl justify-center items-center content-center full-width bg-blue-grey-2"
+    class="column justify-center items-center content-center full-width bg-blue-grey-2"
   >
     <div class="column">
       <h3 class="text-center">Sign Up</h3>
