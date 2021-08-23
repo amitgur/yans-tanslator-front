@@ -33,7 +33,21 @@
           >
             <template v-slot:body-cell-databases="props">
               <q-td :props="props">
-                <!-- set database colors below -->
+                <span
+                  v-if="props.row.databases.length === 0"
+                  class="q-pl-sm text-grey-5"
+                  >empty</span
+                >
+                <!-- 
+                  Set database colors below
+                  To add a new color for a new database copy and add the following line and modify COLOR and INDEX
+
+                    'bg-COLOR-1 text-COLOR': db === allDatabases[INDEX],
+
+                  COLOR should be the same value for both bg and text using Quasar's color list
+                    https://quasar.dev/style/color-palette#color-list
+                  INDEX should be the next number in the sequence
+                -->
                 <span
                   v-for="db in props.row.databases"
                   :key="db"
@@ -43,6 +57,8 @@
                     'bg-purple-1 text-purple': db === allDatabases[1],
                     'bg-green-1 text-green': db === allDatabases[2],
                     'bg-blue-1 text-blue': db === allDatabases[3],
+                    'bg-pink-1 text-pink': db === allDatabases[4],
+                    'bg-cyan-1 text-cyan': db === allDatabases[5],
                   }"
                   >{{ db }}</span
                 >
@@ -190,7 +206,6 @@ export default {
             }
             return languageList.find((e) => e.tag === val).label;
           },
-          classes: (row) => (!row.languageTo.length ? "text-grey-5" : ""),
         },
         {
           name: "databases",
@@ -198,12 +213,6 @@ export default {
           field: "databases",
           align: "left",
           sortable: true,
-          format: (val) => {
-            if (!val.length) {
-              return "empty";
-            }
-            return val.join(", ");
-          },
           classes: (row) => (!row.databases.length ? "text-grey-5" : ""),
         },
         {
@@ -279,6 +288,7 @@ export default {
   padding: 0.25em 0.6em;
   margin: 0 0.15em;
   border-radius: 1em;
-  background: rgba(128, 128, 128, 0.2);
+  background: rgba(128, 128, 128, 0.1);
+  color: grey;
 }
 </style>
