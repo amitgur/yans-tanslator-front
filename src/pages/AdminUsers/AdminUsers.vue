@@ -32,10 +32,13 @@
             table-header-class="text-white bg-primary"
           >
             <template v-slot:body-cell-databases="props">
-              <q-td :props="props">
+              <q-td
+                :props="props"
+                :class="props.row.languageTo == '' ? newUserColor : ''"
+              >
                 <span
                   v-if="props.row.databases.length === 0"
-                  class="q-pl-sm text-grey-5"
+                  class="q-pl-sm text-grey-6"
                   >empty</span
                 >
                 <!-- 
@@ -65,7 +68,10 @@
               </q-td>
             </template>
             <template v-slot:body-cell-edit="props">
-              <q-td :props="props">
+              <q-td
+                :props="props"
+                :class="props.row.languageTo == '' ? newUserColor : ''"
+              >
                 <q-btn
                   color="grey"
                   icon-right="edit"
@@ -76,6 +82,14 @@
                   dense
                   @click="editItem(props.row)"
                 />
+              </q-td>
+            </template>
+            <template v-slot:body-cell="props">
+              <q-td
+                :props="props"
+                :class="props.row.languageTo == '' ? newUserColor : ''"
+              >
+                {{ props.value }}
               </q-td>
             </template>
           </q-table>
@@ -149,6 +163,7 @@ export default {
     return {
       languageList,
       menuList,
+      newUserColor: "bg-light-blue-1",
       searchText: "",
       openEditDialog: false,
       dialogEditItem: {},
@@ -206,6 +221,7 @@ export default {
             }
             return languageList.find((e) => e.tag === val).label;
           },
+          classes: (row) => (!row.languageTo ? "text-grey-6" : ""),
         },
         {
           name: "databases",
@@ -213,7 +229,6 @@ export default {
           field: "databases",
           align: "left",
           sortable: true,
-          classes: (row) => (!row.databases.length ? "text-grey-5" : ""),
         },
         {
           name: "edit",
@@ -259,15 +274,31 @@ export default {
           languageTo: this.currentLanguage,
           databases: this.currentDatabases,
         });
+        this.sortNewUsers();
       } catch (err) {
         serverError(err);
       }
+    },
+
+    sortNewUsers() {
+      this.userData.sort((a, b) => {
+        if (!a.languageTo && b.languageTo) {
+          return -1;
+        }
+        if (a.languageTo && !b.languageTo) {
+          return 1;
+        }
+        return 0;
+      });
     },
   },
   async created() {
     try {
       const res = await this.$axios.get("/apiV1/admin_get_users");
       this.userData = res.data;
+
+      this.sortNewUsers();
+
       const res2 = await this.$axios.get("/apiV1/admin_get_databases");
       this.allDatabases = res2.data;
       this.dialogEditItem = res.data[0];

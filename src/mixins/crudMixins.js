@@ -11,6 +11,11 @@ export default {
 
         // setting page tab values from backend
         const pages = await this.$axios.get("/apiV1/get_pages");
+        if (pages.data.status === 304) {
+          this.noDisplayData();
+          return;
+        }
+
         this.filteredData = pages.data.map(function(item) {
           return item.name;
         });

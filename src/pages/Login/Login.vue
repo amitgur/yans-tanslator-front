@@ -89,16 +89,23 @@ export default {
         // route to login
         await this.$store.dispatch("Auth/signIn", response.data);
         const isAdmin = this.$store.getters["Auth/getIsAdmin"];
-        isAdmin
-          ? this.$router.push("/admin")
-          : this.$router.push("/translator");
+        if (isAdmin) {
+          this.$router.push("/admin");
+        } else {
+          this.$router.push("/translator");
+          if (!this.user.databases.length) {
+            this.myDialog(
+              "You haven't been approved for any Databases yet. Contact an Admin to get approved."
+            );
+          }
+        }
       } catch (err) {
         this.serverError(err);
       }
     },
   },
   computed: {
-    ...mapState("Auth", ["isSignIn"]),
+    ...mapState("Auth", ["user", "isSignIn"]),
   },
 
   // Routes to landing page from sign in

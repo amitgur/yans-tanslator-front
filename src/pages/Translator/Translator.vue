@@ -12,7 +12,7 @@
               v-model="searchText"
               @keyup="searchFilter"
               label="Search"
-              style="min-width: 400px"
+              style="min-width: 380px"
             >
               <template v-slot:append>
                 <q-icon
@@ -27,26 +27,31 @@
                 <q-icon name="search" />
               </template>
             </q-input>
-            <div class="row">
+            <div class="row justify-between" style="min-width: 380px">
               <!-- language from toggle -->
-              <q-btn-toggle
-                v-model="translateFrom"
-                class="language-toggle q-py-lg"
-                no-caps
-                unelevated
-                rounded
-                padding="0.2em 1em"
-                toggle-color="blue-7"
-                color="grey-3"
-                text-color="primary"
-                :options="[
-                  { label: 'English', value: 'en' },
-                  { label: 'עברית', value: 'he' },
-                ]"
-                @click="togglePreferredLanguageFrom"
-              />
+              <div class="column justify-center">
+                <div class="q-pl-xs text-grey-6" style="font-size: 0.8rem">
+                  Translate from
+                </div>
+                <q-btn-toggle
+                  v-model="translateFrom"
+                  class="language-toggle q-pt-xs"
+                  no-caps
+                  unelevated
+                  rounded
+                  padding="0.2em 1em"
+                  toggle-color="blue-7"
+                  color="grey-3"
+                  text-color="primary"
+                  :options="[
+                    { label: 'English', value: 'en' },
+                    { label: 'עברית', value: 'he' },
+                  ]"
+                  @click="togglePreferredLanguageFrom"
+                />
+              </div>
               <q-select
-                class="q-ml-xl q-py-md"
+                class="q-py-md"
                 style="min-width: 200px"
                 outlined
                 label="Database"
@@ -88,7 +93,7 @@
           </div>
 
           <!-- table content -->
-          <div class="q-px-md q-py-lg">
+          <div class="q-py-lg">
             <div
               v-for="item in displayData"
               :key="item.key"
@@ -161,30 +166,37 @@
               </div>
             </div>
           </div>
-          <q-page-sticky position="bottom-right" :offset="[18, 18]">
-            <q-btn
-              fab
-              :color="changedDataSize === 0 ? 'grey-5' : 'green'"
-              text-color="black"
-              :label="scrollDown ? '' : 'Update'"
-              icon="update"
-              @click="updateTranslation"
-              class="text-subtitle1 update-button-transition update-button"
-              :class="{
-                'q-px-lg': !scrollDown,
-              }"
+          <transition name="fade">
+            <q-page-sticky
+              position="bottom-right"
+              v-if="changedDataSize"
+              :offset="[18, 18]"
             >
-              <q-badge
-                rounded
-                color="red"
-                floating
-                :class="{ hidden: changedDataSize === 0 }"
-                class="update-button-transition q-px-sm"
-                style="font-size: 1em; min-width: 1.5em; height: 1.5em"
-                >{{ changedDataSize }}</q-badge
+              <q-btn
+                class="text-subtitle1 update-button"
+                fab
+                color="green-5"
+                text-color="black"
+                :label="scrollDown ? '' : 'Update'"
+                icon="update"
+                @click="updateTranslation"
+                :class="{
+                  'q-px-lg': !scrollDown,
+                }"
               >
-            </q-btn>
-          </q-page-sticky>
+                <transition name="fade">
+                  <q-badge
+                    rounded
+                    color="red"
+                    floating
+                    v-if="changedDataSize > 1"
+                    class="q-px-sm update-button-badge"
+                    >{{ changedDataSize }}</q-badge
+                  >
+                </transition>
+              </q-btn>
+            </q-page-sticky>
+          </transition>
         </div>
       </q-page>
     </q-page-container>
@@ -372,12 +384,23 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.update-button-transition {
-  transition: all 0.4s;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
 }
 
 .update-button {
   opacity: 0.8;
+  transition: all 0.4s;
+}
+
+.update-button-badge {
+  font-size: 1em;
+  min-width: 1.5em;
+  height: 1.5em;
 }
 
 .input-transition {

@@ -119,7 +119,7 @@ export default {
       try {
         response = await this.$axios.post("/apiV1/sign_up", user);
         // send to login
-        this.myDialog(response.data.msg);
+        this.myDialog(response.data.msg, response.data.sub);
         if (response.data.status === "ok") {
           this.autoLogin(user);
         }

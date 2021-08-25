@@ -24,15 +24,17 @@
           :key="index"
           v-show="showMenuItemByUser(menuItem.profile)"
           flat
+          :icon="iconSelector(menuItem.label)"
           @click="clickMenuItem(menuItem)"
           class="q-mr-sm gt-sm english-small text-bold"
           :class="menuItem.link === currentItem ? 'text-blue-2' : 'text-white'"
-          ><span
-            class="english-small"
-            style="font-size: 20px; font-weight: 400"
-            >{{ menuItem.label }}</span
-          ></q-btn
         >
+          <span
+            class="english-small q-pl-xs"
+            style="font-size: 20px; font-weight: 400"
+            >{{ labelOutput(menuItem.label) }}
+          </span>
+        </q-btn>
 
         <q-space />
         <div>
@@ -106,7 +108,10 @@
             v-ripple
           >
             <q-item-section>
-              {{ menuItem.label }}
+              <span class="row justify-between q-px-sm q-pt-sm items-center">
+                {{ labelOutput(menuItem.label) }}
+                <q-icon :name="iconSelector(menuItem.label)" />
+              </span>
             </q-item-section>
           </q-item>
         </template>
@@ -118,6 +123,8 @@
 <script>
 import { scroll } from "quasar";
 import { mapState } from "vuex";
+import languageList from "src/pages/languageList";
+
 const { getScrollTarget, setScrollPosition } = scroll;
 
 export default {
@@ -130,6 +137,7 @@ export default {
       menuTag: null,
       left: false,
       currentItem: "",
+      languageList,
     };
   },
   methods: {
@@ -185,6 +193,25 @@ export default {
     },
     showMenuItemByUser(profile) {
       return profile === this.user?.profile;
+    },
+    labelOutput(label) {
+      if (this.isSignIn && label === "Translate" && this.user?.languageTo) {
+        return languageList.find((e) => e.tag === this.user.languageTo)
+          .translate;
+      }
+      return label;
+    },
+    iconSelector(label) {
+      switch (label) {
+        case "Home":
+          return "home";
+        case "Translate":
+          return "translate";
+        case "Users":
+          return "group";
+        case "Admin":
+          return "translate";
+      }
     },
   },
   computed: {
