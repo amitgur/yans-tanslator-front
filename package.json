@@ -9,7 +9,9 @@
   "private": false,
   "scripts": {
     "start": "quasar dev",
-    "build": "quasar build"
+    "build": "quasar build",
+    "deployTest": "quasar build && rsync -aP dist/spa/ bandpad@bandpadtest.com:bandpad/yans-translator-front",
+    "deployProduction": "rsync -aP dist/spa"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",

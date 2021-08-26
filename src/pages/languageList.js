@@ -200,7 +200,7 @@ const languageList = [
     type: "label",
     label: "Japanese",
     tag: "ja",
-    translate: "翻訳",
+    translate: "やく‐す",
   },
   {
     type: "label",

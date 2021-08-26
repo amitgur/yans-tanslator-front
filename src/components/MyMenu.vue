@@ -209,7 +209,7 @@ export default {
           return "translate";
         case "Users":
           return "group";
-        case "Admin":
+        case "Translations":
           return "translate";
       }
     },

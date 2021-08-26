@@ -26,7 +26,7 @@ const menuList = [
   { type: "link", label: "Home", link: "/", profile: "admin" },
   {
     type: "link",
-    label: "Admin",
+    label: "Translations",
     link: "/admin",
     profile: "admin",
   },
