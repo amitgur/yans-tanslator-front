@@ -43,44 +43,56 @@
             style="transition: all 0.5s"
           >
             <q-card>
-              <q-tabs
-                class="bg-primary text-white"
-                v-model="tab"
-                align="justify"
-                inline-label
-              >
-                <q-tab
-                  v-for="page in filteredData"
-                  :key="page"
-                  :name="page"
-                  :label="page"
-                  @click="setDisplayData(page)"
+              <q-toolbar class="bg-primary" v-show="!!filteredData.length">
+                <q-tabs
+                  class="bg-primary text-white"
+                  v-model="tab"
+                  align="justify"
+                  inline-label
+                  shrink
+                  stretch
                 >
-                  <q-btn-dropdown class="tab-dropdown" size="sm" unelevated>
-                    <q-list>
-                      <q-item
-                        clickable
-                        v-close-popup
-                        @click="deletePageAllow(page)"
-                      >
-                        <q-item-section>
-                          <q-item-label>Delete </q-item-label>
-                        </q-item-section>
-                      </q-item>
+                  <q-tab
+                    v-for="page in filteredData"
+                    :key="page"
+                    :name="page"
+                    :label="page"
+                    @click="setDisplayData(page)"
+                  >
+                    <q-btn-dropdown class="tab-dropdown" size="sm" unelevated>
+                      <q-list>
+                        <q-item
+                          clickable
+                          v-close-popup
+                          @click="deletePageAllow(page)"
+                        >
+                          <q-item-section>
+                            <q-item-label>Delete </q-item-label>
+                          </q-item-section>
+                        </q-item>
 
-                      <q-item
-                        clickable
-                        v-close-popup
-                        @click="renamePageAllow(page)"
-                      >
-                        <q-item-section>
-                          <q-item-label>Rename</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-btn-dropdown>
-                </q-tab>
-              </q-tabs>
+                        <q-item
+                          clickable
+                          v-close-popup
+                          @click="renamePageAllow(page)"
+                        >
+                          <q-item-section>
+                            <q-item-label>Rename</q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-btn-dropdown>
+                  </q-tab>
+                </q-tabs>
+                <q-space />
+                <q-btn
+                  flat
+                  class="text-white"
+                  icon-right="note_add"
+                  size="md"
+                  @click="addPage = true"
+                />
+              </q-toolbar>
             </q-card>
           </div>
           <!-- table content -->
@@ -166,32 +178,31 @@
             <div class="text-h1 text-center text-grey-4 empty-texts">
               {{ noDisplayText }}
               <div class="text-h4">{{ noDisplaySubtitle }}</div>
+              <q-btn
+                v-show="!filteredData.length"
+                flat
+                rounded
+                fill
+                size="lg"
+                icon="note_add"
+                label="Add Page"
+                color="blue-7"
+                @click="addPage = true"
+              />
             </div>
           </div>
         </div>
-        <div class="indicator" :class="{ hidden: !!filteredData.length }">
-          <q-icon name="arrow_downward" />
-        </div>
         <q-page-sticky position="bottom-right" :offset="[18, 18]">
-          <q-fab
-            color="accent"
+          <q-btn
+            fab
+            v-show="!!filteredData.length"
+            color="blue-7"
+            rounded
             icon="add"
-            direction="left"
             class="text-subtitle1 update-button text-bold text-white"
+            @click="addItem = true"
           >
-            <q-fab-action
-              color="primary"
-              @click="addPage = true"
-              label="New Page"
-              icon="note_add"
-            />
-            <q-fab-action
-              color="secondary"
-              @click="addItem = true"
-              label="New Item"
-              icon="add"
-            />
-          </q-fab>
+          </q-btn>
         </q-page-sticky>
         <div class="q-ma-xl" style="height: 10px"></div>
       </q-page>
@@ -205,6 +216,15 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none row justify-between">
+          <q-select
+            class="col-5"
+            outlined
+            label="Page"
+            :options="filteredData"
+            @input="addItemChanged"
+            v-model="addItemData.page"
+            :rules="[(val) => !!val || 'Field is required']"
+          />
           <q-input
             class="col-6"
             outlined
@@ -217,15 +237,6 @@
                 !allData.find((item) => item.key === val) ||
                 'Key already exists',
             ]"
-          />
-          <q-select
-            class="col-5"
-            outlined
-            label="Page"
-            :options="filteredData"
-            @input="addItemChanged"
-            v-model="addItemData.page"
-            :rules="[(val) => !!val || 'Field is required']"
           />
         </q-card-section>
         <q-card-section class="q-pt-none">
@@ -715,6 +726,7 @@ export default {
     // this filters and displays all the data for the specific page
     setDisplayData(filterString) {
       this.displayData = this.allData.filter((e) => e.page === filterString);
+      this.addItemData.page = filterString;
       this.noDisplayData();
     },
 
@@ -732,12 +744,12 @@ export default {
     // this clears the data so that it isn't persistent
     clearAddItem() {
       this.addItemData = {
-        key: null,
+        key: "",
         translatedText: {
-          en: null,
+          en: "",
         },
         description: "",
-        page: null,
+        page: this.addItemData.page,
       };
       this.addItemSubmit = false;
     },
@@ -864,15 +876,6 @@ export default {
   opacity: 0.8;
 }
 
-.indicator {
-  position: fixed;
-  right: 18px;
-  bottom: 70px;
-  font-size: 56px;
-  color: lightgray;
-  animation: wake-up 7s linear, indicate 1.2s infinite;
-}
-
 .loader {
   border: 0.5em solid #f3f3f3; /* Light grey */
   border-top: 0.5em solid #6d7c87; /* Blue */
@@ -906,18 +909,6 @@ export default {
   }
   100% {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes indicate {
-  0% {
-    bottom: 70px;
-  }
-  50% {
-    bottom: 85px;
-  }
-  100% {
-    bottom: 70px;
   }
 }
 

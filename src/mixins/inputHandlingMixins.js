@@ -12,13 +12,16 @@ export default {
         this.noDisplayData();
         return;
       }
+      let lang = "lang:";
+
       // search page, key, and translatedText
       this.displayData = this.allData.filter(
         (e) =>
           e.page.toLowerCase().includes(s) ||
           e.key.toLowerCase().includes(s) ||
           e.translatedText[this.user.languageTo]?.toLowerCase().includes(s) ||
-          e.translatedText[this.user.languageFrom]?.toLowerCase().includes(s)
+          e.translatedText[this.user.languageFrom]?.toLowerCase().includes(s) ||
+          lang.concat(Object.keys(e.translatedText).join(lang)).includes(s)
       );
 
       this.noDisplayData();
